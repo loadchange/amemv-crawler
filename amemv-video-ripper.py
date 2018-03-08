@@ -34,19 +34,19 @@ class DownloadWorker(Thread):
 
     def run(self):
         while True:
-            download_url, target_folder = self.queue.get()
-            self.download(download_url, target_folder)
+            uri, download_url, target_folder = self.queue.get()
+            self.download(uri, download_url, target_folder)
             self.queue.task_done()
 
-    def download(self, download_url, target_folder):
+    def download(self, uri, download_url, target_folder):
         try:
             if download_url is not None:
-                self._download(download_url, target_folder)
+                self._download(uri, download_url, target_folder)
         except TypeError:
             pass
 
-    def _download(self, download_url, target_folder):
-        file_name = str(uuid.uuid1()).replace('-', '') + '.mp4'
+    def _download(self, uri, download_url, target_folder):
+        file_name = uri + '.mp4'
         file_path = os.path.join(target_folder, file_name)
         if not os.path.isfile(file_path):
             print("Downloading %s from %s.\n" % (file_name, download_url))
@@ -154,7 +154,6 @@ class CrawlerScheduler(object):
                 'aid': '1128'
             }
             user_video_url = user_video_url.format('&'.join([key + '=' + user_video_params[key] for key in user_video_params]))
-            print user_video_url
             response = requests.get(user_video_url)
             results = json.loads(response.content.decode('utf-8'))
             aweme_list = results.get('aweme_list', [])
@@ -163,7 +162,10 @@ class CrawlerScheduler(object):
                 break
             try:
                 for post in aweme_list:
-                    self.queue.put((post['video']['play_addr']['url_list'][0], target_folder))
+                    uri = post['video']['play_addr']['uri']
+                    download_url = post['video']['play_addr']['url_list'][0]
+                    self.queue.put((uri, download_url, target_folder))
+                break
             except KeyError:
                 break
             except UnicodeDecodeError:

@@ -1,7 +1,7 @@
 amemv-crawler
 ===============
 
-这是一个[Python](https://www.python.org)的脚本,配置运行后可以从某些你指定的抖音号下载图片和视频.
+这是一个[Python](https://www.python.org)的脚本,配置运行后可以从某些你指定的抖音号下载视频.
 
 ## 怎么样方便地讨论交流
 
