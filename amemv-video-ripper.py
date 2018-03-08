@@ -101,7 +101,8 @@ class CrawlerScheduler(object):
 
     def _download_media(self, number):
         current_folder = os.getcwd()
-        target_folder = os.path.join(current_folder, number)
+        target_folder = os.path.join(current_folder, 'download/%s' % number)
+        print target_folder
         if not os.path.isdir(target_folder):
             os.mkdir(target_folder)
         base_url = "https://api.amemv.com/aweme/v1/discover/search/?{0}"
