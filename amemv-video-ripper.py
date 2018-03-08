@@ -51,6 +51,7 @@ class DownloadWorker(Thread):
             print("Downloading %s from %s.\n" % (file_name, download_url))
             retry_times = 0
             while retry_times < RETRY:
+                download_url = 'https://aweme.snssdk.com/aweme/v1/play/?video_id=%s&line=0&ratio=720p&media_type=4&vr_type=0&test_cdn=None&improve_bitrate=0' % uri
                 try:
                     resp = requests.get(download_url, stream=True, timeout=TIMEOUT)
                     if resp.status_code == 403:
@@ -146,6 +147,7 @@ class CrawlerScheduler(object):
             user_info = user_list[0]['user_info']
             _create_user_info_file(target_folder, user_info)
 
+            aweme_list = []
             user_video_url = "https://www.douyin.com/aweme/v1/aweme/post/?{0}"
             user_video_params = {
                 'user_id': str(user_info.get('uid')),
@@ -153,10 +155,22 @@ class CrawlerScheduler(object):
                 'max_cursor': '0',
                 'aid': '1128'
             }
-            user_video_url = user_video_url.format('&'.join([key + '=' + user_video_params[key] for key in user_video_params]))
-            response = requests.get(user_video_url)
-            results = json.loads(response.content.decode('utf-8'))
-            aweme_list = results.get('aweme_list', [])
+
+            def get_aweme_list(max_cursor=None):
+                if max_cursor:
+                    user_video_params['max_cursor'] = str(max_cursor)
+                url = user_video_url.format('&'.join([key + '=' + user_video_params[key] for key in user_video_params]))
+                print url
+                res = requests.get(url)
+                content = json.loads(res.content.decode('utf-8'))
+                for aweme in content.get('aweme_list', []):
+                    aweme_list.append(aweme)
+                print len(aweme_list)
+                if content.get('has_more') == 1:
+                    get_aweme_list(content.get('max_cursor'))
+
+            get_aweme_list()
+
             if len(aweme_list) == 0:
                 print("There's no video in number %s." % number)
                 break
