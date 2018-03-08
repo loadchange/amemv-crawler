@@ -1,4 +1,3 @@
 requests>=2.10.0
-xmltodict
 six
 PySocks>=1.5.6
