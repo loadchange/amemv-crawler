@@ -1,8 +1,7 @@
 amemv-crawler
 ===============
 
-这是一个[Python](https://www.python.org)的脚本,配置运行后可以从某些你指定的tumblr博客
-下载图片和视频.
+这是一个[Python](https://www.python.org)的脚本,配置运行后可以从某些你指定的抖音号下载图片和视频.
 
 ## 怎么样方便地讨论交流
 
@@ -81,4 +80,4 @@ python amemv-video-ripper.py 抖音号1,抖音号2
 
 如果您喜欢这个项目, 那就打个赏支持一下作者吧! 非常感谢!
 
-<p align="center"><img src="https://raw.githubusercontent.com/loadchange/amemv-crawler/master/award.jpg" width="250"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/loadchange/amemv-crawler/master/award.jpg" width="550"></p>
