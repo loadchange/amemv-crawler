@@ -12,6 +12,8 @@ amemv-crawler
 
 #### 程序猿和程序媛见这里
 
+> 脚本可以运行在 2.7 和 3.5 的 Python 环境下。
+
 配置好你的Python环境,然后`pip install requests `.
 
 或者

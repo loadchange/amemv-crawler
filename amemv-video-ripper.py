@@ -21,7 +21,7 @@ THREADS = 10
 
 def _create_user_info_file(folder, user_info):
     txtName = folder + '/' + user_info.get('uid', 'user_info') + '.json'
-    f = file(txtName, "a+")
+    f = open(txtName, "a+")
     f.write(json.dumps(user_info, sort_keys=True, indent=2))
     f.close()
 
@@ -33,25 +33,36 @@ class DownloadWorker(Thread):
 
     def run(self):
         while True:
-            uri, download_url, target_folder = self.queue.get()
-            self.download(uri, download_url, target_folder)
+            uri, target_folder = self.queue.get()
+            self.download(uri, target_folder)
             self.queue.task_done()
 
-    def download(self, uri, download_url, target_folder):
+    def download(self, uri, target_folder):
         try:
-            if download_url is not None:
-                self._download(uri, download_url, target_folder)
+            if uri is not None:
+                self._download(uri, target_folder)
         except TypeError:
             pass
 
-    def _download(self, uri, download_url, target_folder):
+    def _download(self, uri, target_folder):
         file_name = uri + '.mp4'
         file_path = os.path.join(target_folder, file_name)
         if not os.path.isfile(file_path):
+            download_url = 'https://aweme.snssdk.com/aweme/v1/play/?{0}'
+            download_params = {
+                'video_id': uri,
+                'line': '0',
+                'ratio': '720p',
+                'media_type': '4',
+                'vr_type': '0',
+                'test_cdn': 'None',
+                'improve_bitrate': '0'
+            }
+            download_url = download_url.format('&'.join([key + '=' + download_params[key] for key in download_params]))
             print("Downloading %s from %s.\n" % (file_name, download_url))
             retry_times = 0
             while retry_times < RETRY:
-                download_url = 'https://aweme.snssdk.com/aweme/v1/play/?video_id=%s&line=0&ratio=720p&media_type=4&vr_type=0&test_cdn=None&improve_bitrate=0' % uri
+
                 try:
                     resp = requests.get(download_url, stream=True, timeout=TIMEOUT)
                     if resp.status_code == 403:
@@ -103,7 +114,6 @@ class CrawlerScheduler(object):
     def _download_media(self, number):
         current_folder = os.getcwd()
         target_folder = os.path.join(current_folder, 'download/%s' % number)
-        print target_folder
         if not os.path.isdir(target_folder):
             os.mkdir(target_folder)
         base_url = "https://api.amemv.com/aweme/v1/discover/search/?{0}"
@@ -160,12 +170,10 @@ class CrawlerScheduler(object):
                 if max_cursor:
                     user_video_params['max_cursor'] = str(max_cursor)
                 url = user_video_url.format('&'.join([key + '=' + user_video_params[key] for key in user_video_params]))
-                print url
                 res = requests.get(url)
                 content = json.loads(res.content.decode('utf-8'))
                 for aweme in content.get('aweme_list', []):
                     aweme_list.append(aweme)
-                print len(aweme_list)
                 if content.get('has_more') == 1:
                     get_aweme_list(content.get('max_cursor'))
 
@@ -177,8 +185,7 @@ class CrawlerScheduler(object):
             try:
                 for post in aweme_list:
                     uri = post['video']['play_addr']['uri']
-                    download_url = post['video']['play_addr']['url_list'][0]
-                    self.queue.put((uri, download_url, target_folder))
+                    self.queue.put((uri, target_folder))
                 break
             except KeyError:
                 break
