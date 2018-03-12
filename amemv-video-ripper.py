@@ -182,6 +182,9 @@ class CrawlerScheduler(object):
             if len(aweme_list) == 0:
                 print("There's no video in number %s." % number)
                 break
+
+            print("\nAweme number %s, video number %d\n\n" % (number, len(aweme_list)))
+
             try:
                 for post in aweme_list:
                     uri = post['video']['play_addr']['uri']
