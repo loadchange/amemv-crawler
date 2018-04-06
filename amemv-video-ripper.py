@@ -58,16 +58,19 @@ class DownloadWorker(Thread):
                 'test_cdn': 'None',
                 'improve_bitrate': '0'
             }
-            download_url = download_url.format('&'.join([key + '=' + download_params[key] for key in download_params]))
+            download_url = download_url.format(
+                '&'.join([key + '=' + download_params[key] for key in download_params]))
             print("Downloading %s from %s.\n" % (file_name, download_url))
             retry_times = 0
             while retry_times < RETRY:
 
                 try:
-                    resp = requests.get(download_url, stream=True, timeout=TIMEOUT)
+                    resp = requests.get(
+                        download_url, stream=True, timeout=TIMEOUT)
                     if resp.status_code == 403:
                         retry_times = RETRY
-                        print("Access Denied when retrieve %s.\n" % download_url)
+                        print("Access Denied when retrieve %s.\n" %
+                              download_url)
                         raise Exception("Access Denied")
                     with open(file_path, 'wb') as fh:
                         for chunk in resp.iter_content(chunk_size=1024):
@@ -146,7 +149,8 @@ class CrawlerScheduler(object):
         }
 
         while True:
-            user_search_url = base_url.format('&'.join([key + '=' + params[key] for key in params]))
+            user_search_url = base_url.format(
+                '&'.join([key + '=' + params[key] for key in params]))
             response = requests.get(user_search_url)
 
             results = json.loads(response.content.decode('utf-8'))
@@ -165,12 +169,20 @@ class CrawlerScheduler(object):
                 'max_cursor': '0',
                 'aid': '1128'
             }
+            headers = {
+                'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+                'accept-encoding': 'gzip, deflate, br',
+                'accept-language': 'zh-CN,zh;q=0.9',
+                'cache-control': 'max-age=0',
+                'upgrade-insecure-requests': '1',
+                'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1',
+            }
 
             def get_aweme_list(max_cursor=None):
                 if max_cursor:
                     user_video_params['max_cursor'] = str(max_cursor)
                 url = user_video_url.format('&'.join([key + '=' + user_video_params[key] for key in user_video_params]))
-                res = requests.get(url)
+                res = requests.get(url, headers=headers)
                 content = json.loads(res.content.decode('utf-8'))
                 for aweme in content.get('aweme_list', []):
                     aweme_list.append(aweme)
@@ -183,7 +195,8 @@ class CrawlerScheduler(object):
                 print("There's no video in number %s." % number)
                 break
 
-            print("\nAweme number %s, video number %d\n\n" % (number, len(aweme_list)))
+            print("\nAweme number %s, video number %d\n\n" %
+                  (number, len(aweme_list)))
 
             try:
                 for post in aweme_list:
@@ -193,7 +206,8 @@ class CrawlerScheduler(object):
             except KeyError:
                 break
             except UnicodeDecodeError:
-                print("Cannot decode response data from URL %s" % user_video_url)
+                print("Cannot decode response data from URL %s" %
+                      user_video_url)
                 continue
 
 
