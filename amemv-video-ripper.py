@@ -58,19 +58,15 @@ class DownloadWorker(Thread):
                 'test_cdn': 'None',
                 'improve_bitrate': '0'
             }
-            download_url = download_url.format(
-                '&'.join([key + '=' + download_params[key] for key in download_params]))
+            download_url = download_url.format('&'.join([key + '=' + download_params[key] for key in download_params]))
             print("Downloading %s from %s.\n" % (file_name, download_url))
             retry_times = 0
             while retry_times < RETRY:
-
                 try:
-                    resp = requests.get(
-                        download_url, stream=True, timeout=TIMEOUT)
+                    resp = requests.get(download_url, stream=True, timeout=TIMEOUT)
                     if resp.status_code == 403:
                         retry_times = RETRY
-                        print("Access Denied when retrieve %s.\n" %
-                              download_url)
+                        print("Access Denied when retrieve %s.\n" % download_url)
                         raise Exception("Access Denied")
                     with open(file_path, 'wb') as fh:
                         for chunk in resp.iter_content(chunk_size=1024):
@@ -149,8 +145,7 @@ class CrawlerScheduler(object):
         }
 
         while True:
-            user_search_url = base_url.format(
-                '&'.join([key + '=' + params[key] for key in params]))
+            user_search_url = base_url.format('&'.join([key + '=' + params[key] for key in params]))
             response = requests.get(user_search_url)
 
             results = json.loads(response.content.decode('utf-8'))
