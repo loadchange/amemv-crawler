@@ -26,6 +26,14 @@ def _create_user_info_file(folder, user_info):
     f.close()
 
 
+def _create_challenge_info_file(folder, challenge, challenge_info):
+    txtName = folder + '/' + challenge_info.get('cid') + '.json'
+    f = open(txtName, "a+")
+    f.write('\r\n#' + challenge + '\r\n')
+    f.write(json.dumps(challenge_info, sort_keys=True, indent=2))
+    f.close()
+
+
 class DownloadWorker(Thread):
     def __init__(self, queue):
         Thread.__init__(self)
@@ -86,8 +94,14 @@ class DownloadWorker(Thread):
 
 class CrawlerScheduler(object):
 
-    def __init__(self, numbers):
-        self.numbers = numbers
+    def __init__(self, items):
+        self.numbers = []
+        self.challenges = []
+        for i in range(len(items)):
+            if items[i].startswith('#'):
+                self.challenges.append(items[i][1:])
+            else:
+                self.numbers.append(items[i])
         self.queue = Queue.Queue()
         self.scheduling()
 
@@ -103,19 +117,21 @@ class CrawlerScheduler(object):
         for number in self.numbers:
             self.download_videos(number)
 
+        for challenge in self.challenges:
+            self.download_challenge_videos(challenge)
+
     def download_videos(self, number):
-        self._download_media(number)
-        # wait for the queue to finish processing all the tasks from one
-        # single site
+        self._download_user_media(number)
         self.queue.join()
         print("Finish Downloading All the videos from %s" % number)
 
-    def _download_media(self, number):
-        current_folder = os.getcwd()
-        target_folder = os.path.join(current_folder, 'download/%s' % number)
-        if not os.path.isdir(target_folder):
-            os.mkdir(target_folder)
-        base_url = "https://api.amemv.com/aweme/v1/discover/search/?{0}"
+    def download_challenge_videos(self, challenge):
+        self._download_challenge_media(challenge)
+        self.queue.join()
+        print("Finish Downloading All the videos from #%s" % challenge)
+
+    def _search(self, keyword, source):
+        base_url = "https://api.amemv.com/aweme/v1/%s/search/?{0}" % source
         params = {
             'iid': '26666102238',
             'device_id': '46166717995',
@@ -124,36 +140,70 @@ class CrawlerScheduler(object):
             'channel': 'App%20Store',
             'idfa': '00000000-0000-0000-0000-000000000000',
             'device_platform': 'iphone',
-            'build_number': '17409',
+            'build_number': '17603',
             'vid': '2ED370A7-F09C-4C9E-90F5-872D57F3127C',
             'openudid': '20dae85eeac1da35a69e2a0ffeaeef41c78a2e97',
             'device_type': 'iPhone8,2',
-            'app_version': '1.7.4',
-            'version_code': '1.7.4',
-            'os_version': '11.2.6',
+            'app_version': '1.7.6',
+            'version_code': '1.7.6',
+            'os_version': '11.3',
             'screen_width': '1242',
             'aid': '1128',
             'ac': 'WIFI',
             'count': '20',
             'cursor': '0',
-            'keyword': number,
-            'search_source': 'discover',
-            'type': '1',
-            'mas': '00c535afeea60d0368d1a71368a2e4fc43dfb7fb4db8dc52b104ee',
-            'as': 'a1c5a90a2959ba94808053',
+            'keyword': keyword,
             'ts': str(int(time.time()))
         }
+        if source == 'discover':
+            params['search_source'] = 'discover'
+            params['type'] = '1'
+            params['mas'] = '00a49d57e900796603a0887771255f2c2c8351009ce265bf1f2eb8'
+            params['as'] = 'a1f580bcf1afba41976207'
+        if source == 'challenge':
+            params['iid'] = '28175672430'
+            params['search_source'] = 'challenge'
+            params['mas'] = '008c37d4eaf9b158c3d1b7e3fc0d66008dc45306aae0ff5380d6a8'
+            params['as'] = 'a1c5600cb7576a7e273418'
 
-        while True:
-            user_search_url = base_url.format('&'.join([key + '=' + params[key] for key in params]))
-            response = requests.get(user_search_url)
+        search_url = base_url.format('&'.join([key + '=' + params[key] for key in params]))
+        response = requests.get(search_url, headers={
+            'Host': 'api.amemv.com',
+            'User-Agent': 'Aweme/1.7.6 (iPhone; iOS 11.3; Scale/3.00)'
+        })
 
-            results = json.loads(response.content.decode('utf-8'))
+        results = json.loads(response.content.decode('utf-8'))
+        if source == 'discover':
             user_list = results.get('user_list', [])
             if len(user_list) == 0:
+                return None
+            return user_list[0]['user_info']
+        if source == 'challenge':
+            challenge_list = results.get('challenge_list', [])
+            if len(challenge_list) == 0:
+                return None
+            return challenge_list[0]['challenge_info']
+
+    headers = {
+        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+        'accept-encoding': 'gzip, deflate, br',
+        'accept-language': 'zh-CN,zh;q=0.9',
+        'cache-control': 'max-age=0',
+        'upgrade-insecure-requests': '1',
+        'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1',
+    }
+
+    def _download_user_media(self, number):
+        current_folder = os.getcwd()
+        target_folder = os.path.join(current_folder, 'download/%s' % number)
+        if not os.path.isdir(target_folder):
+            os.mkdir(target_folder)
+
+        while True:
+            user_info = self._search(number, 'discover')
+            if not user_info:
                 print("Number %s does not exist" % number)
                 break
-            user_info = user_list[0]['user_info']
             _create_user_info_file(target_folder, user_info)
 
             aweme_list = []
@@ -164,25 +214,17 @@ class CrawlerScheduler(object):
                 'max_cursor': '0',
                 'aid': '1128'
             }
-            headers = {
-                'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-                'accept-encoding': 'gzip, deflate, br',
-                'accept-language': 'zh-CN,zh;q=0.9',
-                'cache-control': 'max-age=0',
-                'upgrade-insecure-requests': '1',
-                'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1',
-            }
 
             def get_aweme_list(max_cursor=None):
                 if max_cursor:
                     user_video_params['max_cursor'] = str(max_cursor)
                 url = user_video_url.format('&'.join([key + '=' + user_video_params[key] for key in user_video_params]))
-                res = requests.get(url, headers=headers)
-                content = json.loads(res.content.decode('utf-8'))
-                for aweme in content.get('aweme_list', []):
+                res = requests.get(url, headers=self.headers)
+                contentJson = json.loads(res.content.decode('utf-8'))
+                for aweme in contentJson.get('aweme_list', []):
                     aweme_list.append(aweme)
-                if content.get('has_more') == 1:
-                    get_aweme_list(content.get('max_cursor'))
+                if contentJson.get('has_more') == 1:
+                    get_aweme_list(contentJson.get('max_cursor'))
 
             get_aweme_list()
 
@@ -203,6 +245,62 @@ class CrawlerScheduler(object):
             except UnicodeDecodeError:
                 print("Cannot decode response data from URL %s" %
                       user_video_url)
+                continue
+
+    def _download_challenge_media(self, challenge):
+
+        while True:
+            challenge_info = self._search(challenge, 'challenge')
+            challenge_id = challenge_info.get('cid')
+            if not challenge_id:
+                print("Challenge #%s does not exist" % challenge)
+                break
+            current_folder = os.getcwd()
+            target_folder = os.path.join(current_folder, 'download/#%s' % challenge_id)
+            if not os.path.isdir(target_folder):
+                os.mkdir(target_folder)
+
+            _create_challenge_info_file(target_folder, challenge, challenge_info)
+
+            aweme_list = []
+            challenge_video_url = "https://www.iesdouyin.com/aweme/v1/challenge/aweme/?{0}"
+            challenge_video_params = {
+                'ch_id': str(challenge_id),
+                'count': '9',
+                'cursor': '0',
+                'aid': '1128',
+                'screen_limit': '3',
+                'download_click_limit': '3'
+            }
+
+            def get_aweme_list(cursor=None):
+                if cursor:
+                    challenge_video_params['cursor'] = str(cursor)
+                url = challenge_video_url.format('&'.join([key + '=' + challenge_video_params[key] for key in challenge_video_params]))
+                res = requests.get(url, headers=self.headers)
+                contentJson = json.loads(res.content.decode('utf-8'))
+                for aweme in contentJson.get('aweme_list', []):
+                    aweme_list.append(aweme)
+                if contentJson.get('has_more') == 1:
+                    get_aweme_list(contentJson.get('cursor'))
+
+            get_aweme_list()
+
+            if len(aweme_list) == 0:
+                print("There's no video in challenge %s." % challenge)
+                break
+
+            print("\nAweme challenge #%s, video number %d\n\n" % (challenge, len(aweme_list)))
+
+            try:
+                for post in aweme_list:
+                    uri = post['video']['play_addr']['uri']
+                    self.queue.put((uri, target_folder))
+                break
+            except KeyError:
+                break
+            except UnicodeDecodeError:
+                print("Cannot decode response data from URL %s" % challenge_video_url)
                 continue
 
 
@@ -241,20 +339,20 @@ def parse_sites(fileName):
 
 
 if __name__ == "__main__":
-    numbers = None
+    content = None
 
     if len(sys.argv) < 2:
         # check the sites file
         filename = "user-number.txt"
         if os.path.exists(filename):
-            numbers = parse_sites(filename)
+            content = parse_sites(filename)
         else:
             usage()
             sys.exit(1)
     else:
-        numbers = sys.argv[1].split(",")
+        content = sys.argv[1].split(",")
 
-    if len(numbers) == 0 or numbers[0] == "":
+    if len(content) == 0 or content[0] == "":
         usage()
         sys.exit(1)
-    CrawlerScheduler(numbers)
+    CrawlerScheduler(content)
