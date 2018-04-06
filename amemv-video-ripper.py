@@ -321,7 +321,7 @@ def usage():
 
 
 def parse_sites(fileName):
-    with open(fileName, "r") as f:
+    with open(fileName, "rb") as f:
         raw_sites = f.read().rstrip().lstrip()
 
     raw_sites = raw_sites.replace("\t", ",") \
