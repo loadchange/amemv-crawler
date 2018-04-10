@@ -5,8 +5,7 @@ amemv-crawler
 
 ## 怎么样方便地讨论交流
 
-* 我们现在有了[Slack](https://amemv-crawler.slack.com), 欢迎大家加入, 讨论并解决问题.
-* 或者直接在[Github](https://github.com/loadchange/amemv-crawler/issues/new)上开新的issue;
+* 直接在[Github](https://github.com/loadchange/amemv-crawler/issues/new)上开新的issue;
 
 ## 环境安装
 
@@ -78,6 +77,17 @@ python amemv-video-ripper.py 抖音号1,抖音号2
 
 然后重新运行下载命令.
 <p align="center"><img src="https://raw.githubusercontent.com/loadchange/amemv-crawler/dev/end-of-run.jpg" width="800"></p>
+
+## 高级应用
+
+如果你想下载整个挑战主题，请在 user-number.txt 文件中添加 #关键词
+
+如果你想下载按音乐去下载，请在 user-number.txt 文件中添加 @关键词
+
+如下: 既为抖音号、挑战主题和音乐的三种爬虫方式，需要注意的是，爬虫只对搜索结果第一的结果进行下载，所以请尽量完整的写出你的 主题或音乐名称。
+
+> 189988177,#你可真会拍照,@街舞律动
+
 
 ## 喜欢就打赏吧!
 

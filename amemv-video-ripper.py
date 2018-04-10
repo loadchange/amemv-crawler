@@ -19,18 +19,11 @@ RETRY = 5
 THREADS = 10
 
 
-def _create_user_info_file(folder, user_info):
-    txtName = folder + '/' + user_info.get('uid', 'user_info') + '.json'
+def _create_info_file(folder, file_name, title, jsonInfo):
+    txtName = folder + '/' + file_name
     f = open(txtName, "a+")
-    f.write(json.dumps(user_info, sort_keys=True, indent=2))
-    f.close()
-
-
-def _create_challenge_info_file(folder, challenge, challenge_info):
-    txtName = folder + '/' + challenge_info.get('cid') + '.json'
-    f = open(txtName, "a+")
-    f.write('\r\n#' + challenge + '\r\n')
-    f.write(json.dumps(challenge_info, sort_keys=True, indent=2))
+    f.write('\r\n' + title + '\r\n')
+    f.write(json.dumps(jsonInfo, sort_keys=True, indent=2))
     f.close()
 
 
@@ -81,7 +74,6 @@ class DownloadWorker(Thread):
                             fh.write(chunk)
                     break
                 except:
-                    # try again
                     pass
                 retry_times += 1
             else:
@@ -93,24 +85,32 @@ class DownloadWorker(Thread):
 
 
 class CrawlerScheduler(object):
+    headers = {
+        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+        'accept-encoding': 'gzip, deflate, br',
+        'accept-language': 'zh-CN,zh;q=0.9',
+        'cache-control': 'max-age=0',
+        'upgrade-insecure-requests': '1',
+        'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1',
+    }
 
     def __init__(self, items):
         self.numbers = []
         self.challenges = []
+        self.musics = []
         for i in range(len(items)):
             if items[i].startswith('#'):
                 self.challenges.append(items[i][1:])
+            elif items[i].startswith('@'):
+                self.musics.append(items[i][1:])
             else:
                 self.numbers.append(items[i])
         self.queue = Queue.Queue()
         self.scheduling()
 
     def scheduling(self):
-        # create workers
         for x in range(THREADS):
             worker = DownloadWorker(self.queue)
-            # Setting daemon to True will let the main thread exit
-            # even though the workers are blocking
             worker.daemon = True
             worker.start()
 
@@ -120,15 +120,26 @@ class CrawlerScheduler(object):
         for challenge in self.challenges:
             self.download_challenge_videos(challenge)
 
+        for music in self.musics:
+            self.download_music_videos(music)
+
     def download_videos(self, number):
-        self._download_user_media(number)
+        video_count = self._download_user_media(number)
         self.queue.join()
-        print("Finish Downloading All the videos from %s" % number)
+        print("\nAweme number %s, video number %d\n\n" % (number, video_count))
+        print("\nFinish Downloading All the videos from %s\n\n" % number)
 
     def download_challenge_videos(self, challenge):
-        self._download_challenge_media(challenge)
+        video_count = self._download_challenge_media(challenge)
         self.queue.join()
-        print("Finish Downloading All the videos from #%s" % challenge)
+        print("\nAweme challenge #%s, video number %d\n\n" % (challenge, video_count))
+        print("\nFinish Downloading All the videos from #%s\n\n" % challenge)
+
+    def download_music_videos(self, music):
+        video_count = self._download_music_media(music)
+        self.queue.join()
+        print("\nAweme music @%s, video number %d\n\n" % (music, video_count))
+        print("\nFinish Downloading All the videos from @%s\n\n" % music)
 
     def _search(self, keyword, source):
         base_url = "https://api.amemv.com/aweme/v1/%s/search/?{0}" % source
@@ -140,7 +151,7 @@ class CrawlerScheduler(object):
             'channel': 'App%20Store',
             'idfa': '00000000-0000-0000-0000-000000000000',
             'device_platform': 'iphone',
-            'build_number': '17603',
+            'build_number': '17805',
             'vid': '2ED370A7-F09C-4C9E-90F5-872D57F3127C',
             'openudid': '20dae85eeac1da35a69e2a0ffeaeef41c78a2e97',
             'device_type': 'iPhone8,2',
@@ -165,6 +176,11 @@ class CrawlerScheduler(object):
             params['search_source'] = 'challenge'
             params['mas'] = '008c37d4eaf9b158c3d1b7e3fc0d66008dc45306aae0ff5380d6a8'
             params['as'] = 'a1c5600cb7576a7e273418'
+        if source == 'music':
+            params['iid'] = '30337873848'
+            params['search_source'] = 'music'
+            params['mas'] = '00eb51afe6fb31a163348366b0ec899da01da3beca0dfb8cb8c6a1'
+            params['as'] = 'a1557c6c57393aa8fc3610'
 
         search_url = base_url.format('&'.join([key + '=' + params[key] for key in params]))
         response = requests.get(search_url, headers={
@@ -183,15 +199,20 @@ class CrawlerScheduler(object):
             if len(challenge_list) == 0:
                 return None
             return challenge_list[0]['challenge_info']
+        if source == 'music':
+            music_list = results.get('music', [])
+            if len(music_list) == 0:
+                return None
+            return music_list[0]
 
-    headers = {
-        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-        'accept-encoding': 'gzip, deflate, br',
-        'accept-language': 'zh-CN,zh;q=0.9',
-        'cache-control': 'max-age=0',
-        'upgrade-insecure-requests': '1',
-        'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1',
-    }
+    def _join_download_queue(self, uri, target_folder):
+        try:
+            self.queue.put((uri, target_folder))
+        except KeyError:
+            return
+        except UnicodeDecodeError:
+            print("Cannot decode response data from URI %s" % uri)
+            return
 
     def _download_user_media(self, number):
         current_folder = os.getcwd()
@@ -199,109 +220,137 @@ class CrawlerScheduler(object):
         if not os.path.isdir(target_folder):
             os.mkdir(target_folder)
 
-        while True:
-            user_info = self._search(number, 'discover')
-            if not user_info:
-                print("Number %s does not exist" % number)
-                break
-            _create_user_info_file(target_folder, user_info)
+        user_info = self._search(number, 'discover')
+        if not user_info:
+            print("Number %s does not exist" % number)
+            return
+            _create_info_file(target_folder, user_info['uid'] + '.json', '')
 
-            aweme_list = []
-            user_video_url = "https://www.douyin.com/aweme/v1/aweme/post/?{0}"
-            user_video_params = {
-                'user_id': str(user_info.get('uid')),
-                'count': '21',
-                'max_cursor': '0',
-                'aid': '1128'
-            }
+        user_video_url = "https://www.douyin.com/aweme/v1/aweme/post/?{0}"
+        user_video_params = {
+            'user_id': str(user_info.get('uid')),
+            'count': '21',
+            'max_cursor': '0',
+            'aid': '1128'
+        }
 
-            def get_aweme_list(max_cursor=None):
-                if max_cursor:
-                    user_video_params['max_cursor'] = str(max_cursor)
-                url = user_video_url.format('&'.join([key + '=' + user_video_params[key] for key in user_video_params]))
-                res = requests.get(url, headers=self.headers)
-                contentJson = json.loads(res.content.decode('utf-8'))
-                for aweme in contentJson.get('aweme_list', []):
-                    aweme_list.append(aweme)
-                if contentJson.get('has_more') == 1:
-                    get_aweme_list(contentJson.get('max_cursor'))
+        def get_aweme_list(max_cursor=None, video_count=0):
+            if max_cursor:
+                user_video_params['max_cursor'] = str(max_cursor)
+            url = user_video_url.format('&'.join([key + '=' + user_video_params[key] for key in user_video_params]))
+            res = requests.get(url, headers=self.headers)
+            contentJson = json.loads(res.content.decode('utf-8'))
+            aweme_list = contentJson.get('aweme_list', [])
+            for aweme in aweme_list:
+                video_count += 1
+                self._join_download_queue(aweme['video']['play_addr']['uri'], target_folder)
+            if contentJson.get('has_more') == 1:
+                return get_aweme_list(contentJson.get('max_cursor'), video_count)
 
-            get_aweme_list()
+            return video_count
 
-            if len(aweme_list) == 0:
-                print("There's no video in number %s." % number)
-                break
+        video_count = get_aweme_list()
 
-            print("\nAweme number %s, video number %d\n\n" %
-                  (number, len(aweme_list)))
+        if video_count == 0:
+            print("There's no video in number %s." % number)
 
-            try:
-                for post in aweme_list:
-                    uri = post['video']['play_addr']['uri']
-                    self.queue.put((uri, target_folder))
-                break
-            except KeyError:
-                break
-            except UnicodeDecodeError:
-                print("Cannot decode response data from URL %s" %
-                      user_video_url)
-                continue
+        return video_count
 
     def _download_challenge_media(self, challenge):
 
-        while True:
-            challenge_info = self._search(challenge, 'challenge')
-            challenge_id = challenge_info.get('cid')
-            if not challenge_id:
-                print("Challenge #%s does not exist" % challenge)
-                break
-            current_folder = os.getcwd()
-            target_folder = os.path.join(current_folder, 'download/#%s' % challenge_id)
-            if not os.path.isdir(target_folder):
-                os.mkdir(target_folder)
+        challenge_info = self._search(challenge, 'challenge')
+        challenge_id = challenge_info.get('cid')
+        if not challenge_id:
+            print("Challenge #%s does not exist" % challenge)
+            return
+        current_folder = os.getcwd()
+        target_folder = os.path.join(current_folder, 'download/#%s' % challenge_id)
+        if not os.path.isdir(target_folder):
+            os.mkdir(target_folder)
 
-            _create_challenge_info_file(target_folder, challenge, challenge_info)
+            _create_info_file(target_folder, str(challenge_id) + '.txt', '#' + challenge, challenge_info)
 
-            aweme_list = []
-            challenge_video_url = "https://www.iesdouyin.com/aweme/v1/challenge/aweme/?{0}"
-            challenge_video_params = {
-                'ch_id': str(challenge_id),
-                'count': '9',
-                'cursor': '0',
-                'aid': '1128',
-                'screen_limit': '3',
-                'download_click_limit': '3'
-            }
+        challenge_video_url = "https://www.iesdouyin.com/aweme/v1/challenge/aweme/?{0}"
+        challenge_video_params = {
+            'ch_id': str(challenge_id),
+            'count': '9',
+            'cursor': '0',
+            'aid': '1128',
+            'screen_limit': '3',
+            'download_click_limit': '3'
+        }
 
-            def get_aweme_list(cursor=None):
-                if cursor:
-                    challenge_video_params['cursor'] = str(cursor)
-                url = challenge_video_url.format('&'.join([key + '=' + challenge_video_params[key] for key in challenge_video_params]))
-                res = requests.get(url, headers=self.headers)
-                contentJson = json.loads(res.content.decode('utf-8'))
-                for aweme in contentJson.get('aweme_list', []):
-                    aweme_list.append(aweme)
-                if contentJson.get('has_more') == 1:
-                    get_aweme_list(contentJson.get('cursor'))
+        def get_aweme_list(cursor=None, video_count=0):
 
-            get_aweme_list()
+            if cursor:
+                challenge_video_params['cursor'] = str(cursor)
 
-            if len(aweme_list) == 0:
-                print("There's no video in challenge %s." % challenge)
-                break
+            url = challenge_video_url.format('&'.join([key + '=' + challenge_video_params[key] for key in challenge_video_params]))
+            res = requests.get(url, headers=self.headers)
+            contentJson = json.loads(res.content.decode('utf-8'))
+            aweme_list = contentJson.get('aweme_list', [])
+            for aweme in aweme_list:
+                video_count += 1
+                self._join_download_queue(aweme['video']['play_addr']['uri'], target_folder)
+            if contentJson.get('has_more') == 1:
+                return get_aweme_list(contentJson.get('cursor'), video_count)
 
-            print("\nAweme challenge #%s, video number %d\n\n" % (challenge, len(aweme_list)))
+            return video_count
 
-            try:
-                for post in aweme_list:
-                    uri = post['video']['play_addr']['uri']
-                    self.queue.put((uri, target_folder))
-                break
-            except KeyError:
-                break
-            except UnicodeDecodeError:
-                print("Cannot decode response data from URL %s" % challenge_video_url)
-                continue
+        video_count = get_aweme_list()
+
+        if video_count == 0:
+            print("There's no video in challenge %s." % challenge)
+
+        return video_count
+
+    def _download_music_media(self, music):
+
+        music_info = self._search(music, 'music')
+        music_id = music_info.get('id')
+        if not music_id:
+            print("Challenge #%s does not exist" % music)
+            return
+        current_folder = os.getcwd()
+        target_folder = os.path.join(current_folder, 'download/@%s' % music_id)
+        if not os.path.isdir(target_folder):
+            os.mkdir(target_folder)
+
+            _create_info_file(target_folder, str(music_id) + '.txt', '@' + music, music_info)
+
+        challenge_video_url = "https://www.iesdouyin.com/aweme/v1/music/aweme/?{0}"
+        challenge_video_params = {
+            'music_id': str(music_id),
+            'count': '9',
+            'cursor': '0',
+            'aid': '1128',
+            'screen_limit': '3',
+            'download_click_limit': '3'
+        }
+
+        def get_aweme_list(cursor=None, video_count=0):
+
+            if cursor:
+                challenge_video_params['cursor'] = str(cursor)
+
+            url = challenge_video_url.format('&'.join([key + '=' + challenge_video_params[key] for key in challenge_video_params]))
+            res = requests.get(url, headers=self.headers)
+            contentJson = json.loads(res.content.decode('utf-8'))
+            aweme_list = contentJson.get('aweme_list', [])
+            for aweme in aweme_list:
+                video_count += 1
+                self._join_download_queue(aweme['video']['play_addr']['uri'], target_folder)
+            if contentJson.get('has_more') == 1:
+                return get_aweme_list(contentJson.get('cursor'), video_count)
+
+            return video_count
+
+        video_count = get_aweme_list()
+
+        if video_count == 0:
+            print("There's no video in music %s." % music)
+
+        return video_count
 
 
 def usage():
