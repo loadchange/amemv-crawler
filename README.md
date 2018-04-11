@@ -1,7 +1,7 @@
 amemv-crawler
 ===============
 
-这是一个[Python](https://www.python.org)的脚本,配置运行后可以从某些你指定的抖音号下载视频.
+这是一个[Python](https://www.python.org)的脚本,配置运行后可以下载指定抖音用户的全部视频，也可以下载指定主题(挑战)或音乐下的全部视频。
 
 ## 怎么样方便地讨论交流
 
@@ -76,7 +76,7 @@ python amemv-video-ripper.py 抖音号1,抖音号2
 帮你找回丢失的或者删除的视频.
 
 然后重新运行下载命令.
-<p align="center"><img src="https://raw.githubusercontent.com/loadchange/amemv-crawler/dev/end-of-run.jpg" width="800"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/loadchange/amemv-crawler/master/end-of-run.jpg" width="800"></p>
 
 ## 高级应用
 
