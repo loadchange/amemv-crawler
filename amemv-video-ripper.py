@@ -144,7 +144,7 @@ class CrawlerScheduler(object):
     def _search(self, keyword, source):
         base_url = "https://api.amemv.com/aweme/v1/%s/search/?{0}" % source
         params = {
-            'iid': '26666102238',
+            'iid': '30337873848',
             'device_id': '46166717995',
             'os_api': '18',
             'app_name': 'aweme',
@@ -155,9 +155,8 @@ class CrawlerScheduler(object):
             'vid': '2ED370A7-F09C-4C9E-90F5-872D57F3127C',
             'openudid': '20dae85eeac1da35a69e2a0ffeaeef41c78a2e97',
             'device_type': 'iPhone8,2',
-            'app_version': '1.7.6',
-            'version_code': '1.7.6',
-            'os_version': '11.3',
+            'app_version': '1.7.8',
+            'version_code': '1.7.8',
             'screen_width': '1242',
             'aid': '1128',
             'ac': 'WIFI',
@@ -169,8 +168,8 @@ class CrawlerScheduler(object):
         if source == 'discover':
             params['search_source'] = 'discover'
             params['type'] = '1'
-            params['mas'] = '00a49d57e900796603a0887771255f2c2c8351009ce265bf1f2eb8'
-            params['as'] = 'a1f580bcf1afba41976207'
+            params['mas'] = '00fc63a3e2c269c066fd17f52edbab9573db926606e2534812df38'
+            params['as'] = 'a1f5866d013a6a5dd16888'
         if source == 'challenge':
             params['iid'] = '28175672430'
             params['search_source'] = 'challenge'
@@ -183,13 +182,18 @@ class CrawlerScheduler(object):
             params['as'] = 'a1557c6c57393aa8fc3610'
 
         search_url = base_url.format('&'.join([key + '=' + params[key] for key in params]))
+        cookie_file = open('cookie.txt')
+        cookie_text = cookie_file.read()
+        cookie_file.close()
         response = requests.get(search_url, headers={
             'Host': 'api.amemv.com',
-            'User-Agent': 'Aweme/1.7.6 (iPhone; iOS 11.3; Scale/3.00)'
+            'User-Agent': 'Aweme/1.7.8 (iPhone; iOS 11.3; Scale/3.00)',
+            'Cookie': cookie_text.replace('\n', '')
         })
 
         results = json.loads(response.content.decode('utf-8'))
         if source == 'discover':
+            print results
             user_list = results.get('user_list', [])
             if len(user_list) == 0:
                 return None
@@ -221,6 +225,7 @@ class CrawlerScheduler(object):
             os.mkdir(target_folder)
 
         user_info = self._search(number, 'discover')
+        print user_info
         if not user_info:
             print("Number %s does not exist" % number)
             return
