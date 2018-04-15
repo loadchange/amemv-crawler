@@ -22,6 +22,11 @@ $ git clone https://github.com/loadchange/amemv-crawler.git
 $ cd amemv-crawler
 $ pip install -r requirements.txt
 ```
+#### NODE 环境
+
+2018-04-14 抖音更新了用户列表接口，新增字段_signature，该字段是由
+`douyin_falcon:node_modules/byted-acrawler/dist/runtime` 生成的，所以我们需要先`fuck byted-acrawler`一下，拿到signature，才能继续前行。
+请安装好python的环境之后 顺手安装node 以便顺利的`fuck byted-acrawler`
 
 大功告成,直接跳到下一节配置和运行.
 

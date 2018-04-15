@@ -193,7 +193,6 @@ class CrawlerScheduler(object):
 
         results = json.loads(response.content.decode('utf-8'))
         if source == 'discover':
-            print results
             user_list = results.get('user_list', [])
             if len(user_list) == 0:
                 return None
@@ -225,18 +224,21 @@ class CrawlerScheduler(object):
             os.mkdir(target_folder)
 
         user_info = self._search(number, 'discover')
-        print user_info
         if not user_info:
             print("Number %s does not exist" % number)
             return
             _create_info_file(target_folder, user_info['uid'] + '.json', '')
+
+        p = os.popen('node fuck-byted-acrawler.js %s' % user_info['uid'])
+        signature = p.readlines()[0]
 
         user_video_url = "https://www.douyin.com/aweme/v1/aweme/post/?{0}"
         user_video_params = {
             'user_id': str(user_info.get('uid')),
             'count': '21',
             'max_cursor': '0',
-            'aid': '1128'
+            'aid': '1128',
+            '_signature': signature
         }
 
         def get_aweme_list(max_cursor=None, video_count=0):
