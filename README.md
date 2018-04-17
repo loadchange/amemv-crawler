@@ -7,6 +7,15 @@ amemv-crawler
 
 * 直接在[Github](https://github.com/loadchange/amemv-crawler/issues/new)上开新的issue;
 
+```
+我的帐号因为使用的人太多已经不能在调用搜索接口了，我已经删除cookie.txt的内容
+
+观察URL:https://api.amemv.com/aweme/v1/*/search/?
+
+请大家自己登录app后抓自己的cookie粘在cookie.txt里。
+
+```
+
 ## 环境安装
 
 #### 程序猿和程序媛见这里
