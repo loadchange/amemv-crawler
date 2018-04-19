@@ -3,6 +3,7 @@
 import os
 import sys
 
+import codecs
 import requests
 import time
 from six.moves import queue as Queue
@@ -19,10 +20,9 @@ RETRY = 5
 THREADS = 10
 
 
-def _create_info_file(folder, file_name, title, jsonInfo):
+def _create_info_file(folder, file_name, jsonInfo):
     txtName = folder + '/' + file_name
     f = open(txtName, "a+")
-    f.write('\r\n' + title + '\r\n')
     f.write(json.dumps(jsonInfo, sort_keys=True, indent=2))
     f.close()
 
@@ -181,7 +181,7 @@ class CrawlerScheduler(object):
             params['mas'] = '00eb51afe6fb31a163348366b0ec899da01da3beca0dfb8cb8c6a1'
             params['as'] = 'a1557c6c57393aa8fc3610'
 
-        search_url = base_url.format('&'.join([key + '=' + params[key] for key in params]))
+        search_url = base_url.format('&'.join([key + '=' + params[key] for key in params]), 'utf-8')
         cookie_file = open('cookie.txt')
         cookie_text = cookie_file.read()
         cookie_file.close()
@@ -227,7 +227,7 @@ class CrawlerScheduler(object):
         if not user_info:
             print("Number %s does not exist" % number)
             return
-            _create_info_file(target_folder, user_info['uid'] + '.json', '')
+            _create_info_file(target_folder, user_info['uid'] + '.json', user_info)
 
         p = os.popen('node fuck-byted-acrawler.js %s' % user_info['uid'])
         signature = p.readlines()[0]
@@ -275,7 +275,7 @@ class CrawlerScheduler(object):
         if not os.path.isdir(target_folder):
             os.mkdir(target_folder)
 
-            _create_info_file(target_folder, str(challenge_id) + '.txt', '#' + challenge, challenge_info)
+            _create_info_file(target_folder, str(challenge_id) + '.txt', challenge_info)
 
         challenge_video_url = "https://www.iesdouyin.com/aweme/v1/challenge/aweme/?{0}"
         challenge_video_params = {
@@ -323,7 +323,7 @@ class CrawlerScheduler(object):
         if not os.path.isdir(target_folder):
             os.mkdir(target_folder)
 
-            _create_info_file(target_folder, str(music_id) + '.txt', '@' + music, music_info)
+            _create_info_file(target_folder, str(music_id) + '.txt', music_info)
 
         challenge_video_url = "https://www.iesdouyin.com/aweme/v1/music/aweme/?{0}"
         challenge_video_params = {
@@ -378,16 +378,12 @@ def usage():
 
 def parse_sites(fileName):
     with open(fileName, "rb") as f:
-        raw_sites = f.read().rstrip().lstrip()
-
-    raw_sites = raw_sites.replace("\t", ",") \
-        .replace("\r", ",") \
-        .replace("\n", ",") \
-        .replace(" ", ",")
-    raw_sites = raw_sites.split(",")
-
+        txt = f.read().rstrip().lstrip()
+        txt = codecs.decode(txt, 'utf-8')
+        txt = txt.replace("\t", ",").replace("\r", ",").replace("\n", ",").replace(" ", ",")
+        txt = txt.split(",")
     numbers = list()
-    for raw_site in raw_sites:
+    for raw_site in txt:
         site = raw_site.lstrip().rstrip()
         if site:
             numbers.append(site)

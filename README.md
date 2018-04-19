@@ -1,6 +1,8 @@
 amemv-crawler
 ===============
 
+> 请在Python3下运行
+
 这是一个[Python](https://www.python.org)的脚本,配置运行后可以下载指定抖音用户的全部视频，也可以下载指定主题(挑战)或音乐下的全部视频。
 
 ## 怎么样方便地讨论交流
@@ -14,13 +16,14 @@ amemv-crawler
 
 请大家自己登录app后抓自己的cookie粘在cookie.txt里。
 
+只需要 sessionid=xxxx; 其他内容可以删除
+
 ```
 
 ## 环境安装
 
 #### 程序猿和程序媛见这里
 
-> 脚本可以运行在 2.7 和 3.5 的 Python 环境下。
 
 配置好你的Python环境,然后`pip install requests `.
 
