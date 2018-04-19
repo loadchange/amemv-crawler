@@ -20,13 +20,6 @@ RETRY = 5
 THREADS = 10
 
 
-def _create_info_file(folder, file_name, jsonInfo):
-    txtName = folder + '/' + file_name
-    f = open(txtName, "a+")
-    f.write(json.dumps(jsonInfo, sort_keys=True, indent=2))
-    f.close()
-
-
 class DownloadWorker(Thread):
     def __init__(self, queue):
         Thread.__init__(self)
@@ -34,21 +27,14 @@ class DownloadWorker(Thread):
 
     def run(self):
         while True:
-            uri, target_folder = self.queue.get()
-            self.download(uri, target_folder)
+            medium_type, uri, download_url, target_folder = self.queue.get()
+            self.download(medium_type, uri, download_url, target_folder)
             self.queue.task_done()
 
-    def download(self, uri, target_folder):
-        try:
-            if uri is not None:
-                self._download(uri, target_folder)
-        except TypeError:
-            pass
-
-    def _download(self, uri, target_folder):
-        file_name = uri + '.mp4'
-        file_path = os.path.join(target_folder, file_name)
-        if not os.path.isfile(file_path):
+    def download(self, medium_type, uri, download_url, target_folder):
+        if medium_type == 'image':
+            self._download(uri, 'image', download_url, target_folder)
+        elif medium_type == 'video':
             download_url = 'https://aweme.snssdk.com/aweme/v1/play/?{0}'
             download_params = {
                 'video_id': uri,
@@ -60,14 +46,28 @@ class DownloadWorker(Thread):
                 'improve_bitrate': '0'
             }
             download_url = download_url.format('&'.join([key + '=' + download_params[key] for key in download_params]))
-            print("Downloading %s from %s.\n" % (file_name, download_url))
+            self._download(uri, 'video', download_url, target_folder)
+
+    def _download(self, uri, medium_type, medium_url, target_folder):
+        file_name = uri
+        if medium_type == 'video':
+            file_name += '.mp4'
+        elif medium_type == 'image':
+            file_name += '.jpg'
+            file_name = file_name.replace("/", "-")
+        else:
+            return
+
+        file_path = os.path.join(target_folder, file_name)
+        if not os.path.isfile(file_path):
+            print("Downloading %s from %s.\n" % (file_name, medium_url))
             retry_times = 0
             while retry_times < RETRY:
                 try:
-                    resp = requests.get(download_url, stream=True, timeout=TIMEOUT)
+                    resp = requests.get(medium_url, stream=True, timeout=TIMEOUT)
                     if resp.status_code == 403:
                         retry_times = RETRY
-                        print("Access Denied when retrieve %s.\n" % download_url)
+                        print("Access Denied when retrieve %s.\n" % medium_url)
                         raise Exception("Access Denied")
                     with open(file_path, 'wb') as fh:
                         for chunk in resp.iter_content(chunk_size=1024):
@@ -81,7 +81,7 @@ class DownloadWorker(Thread):
                     os.remove(file_path)
                 except OSError:
                     pass
-                print("Failed to retrieve %s from %s.\n" % download_url)
+                print("Failed to retrieve %s from %s.\n" % medium_url)
 
 
 class CrawlerScheduler(object):
@@ -107,6 +107,12 @@ class CrawlerScheduler(object):
                 self.numbers.append(items[i])
         self.queue = Queue.Queue()
         self.scheduling()
+
+    def _create_info_file(self, folder, file_name, jsonInfo):
+        txtName = folder + '/' + file_name
+        f = open(txtName, "a+")
+        f.write(json.dumps(jsonInfo, sort_keys=True, indent=2))
+        f.close()
 
     def scheduling(self):
         for x in range(THREADS):
@@ -208,13 +214,19 @@ class CrawlerScheduler(object):
                 return None
             return music_list[0]
 
-    def _join_download_queue(self, uri, target_folder):
+    def _join_download_queue(self, aweme, target_folder):
         try:
-            self.queue.put((uri, target_folder))
+            if aweme.get('video', None):
+                self.queue.put(('video', aweme['video']['play_addr']['uri'], None, target_folder))
+            else:
+                if aweme.get('image_infos', None):
+                    image = aweme['image_infos']['label_large']
+                    self.queue.put(('image', image['uri'], image['url_list'][0], target_folder))
+
         except KeyError:
             return
         except UnicodeDecodeError:
-            print("Cannot decode response data from URI %s" % uri)
+            print("Cannot decode response data from DESC %s" % aweme['desc'])
             return
 
     def _download_user_media(self, number):
@@ -227,7 +239,7 @@ class CrawlerScheduler(object):
         if not user_info:
             print("Number %s does not exist" % number)
             return
-            _create_info_file(target_folder, user_info['uid'] + '.json', user_info)
+        self._create_info_file(target_folder, user_info['uid'] + '.json', user_info)
 
         p = os.popen('node fuck-byted-acrawler.js %s' % user_info['uid'])
         signature = p.readlines()[0]
@@ -250,7 +262,7 @@ class CrawlerScheduler(object):
             aweme_list = contentJson.get('aweme_list', [])
             for aweme in aweme_list:
                 video_count += 1
-                self._join_download_queue(aweme['video']['play_addr']['uri'], target_folder)
+                self._join_download_queue(aweme, target_folder)
             if contentJson.get('has_more') == 1:
                 return get_aweme_list(contentJson.get('max_cursor'), video_count)
 
@@ -275,7 +287,7 @@ class CrawlerScheduler(object):
         if not os.path.isdir(target_folder):
             os.mkdir(target_folder)
 
-            _create_info_file(target_folder, str(challenge_id) + '.txt', challenge_info)
+            self._create_info_file(target_folder, str(challenge_id) + '.txt', challenge_info)
 
         challenge_video_url = "https://www.iesdouyin.com/aweme/v1/challenge/aweme/?{0}"
         challenge_video_params = {
@@ -298,7 +310,7 @@ class CrawlerScheduler(object):
             aweme_list = contentJson.get('aweme_list', [])
             for aweme in aweme_list:
                 video_count += 1
-                self._join_download_queue(aweme['video']['play_addr']['uri'], target_folder)
+                self._join_download_queue(aweme, target_folder)
             if contentJson.get('has_more') == 1:
                 return get_aweme_list(contentJson.get('cursor'), video_count)
 
@@ -323,7 +335,7 @@ class CrawlerScheduler(object):
         if not os.path.isdir(target_folder):
             os.mkdir(target_folder)
 
-            _create_info_file(target_folder, str(music_id) + '.txt', music_info)
+            self._create_info_file(target_folder, str(music_id) + '.txt', music_info)
 
         challenge_video_url = "https://www.iesdouyin.com/aweme/v1/music/aweme/?{0}"
         challenge_video_params = {
@@ -346,7 +358,7 @@ class CrawlerScheduler(object):
             aweme_list = contentJson.get('aweme_list', [])
             for aweme in aweme_list:
                 video_count += 1
-                self._join_download_queue(aweme['video']['play_addr']['uri'], target_folder)
+                self._join_download_queue(aweme, target_folder)
             if contentJson.get('has_more') == 1:
                 return get_aweme_list(contentJson.get('cursor'), video_count)
 
