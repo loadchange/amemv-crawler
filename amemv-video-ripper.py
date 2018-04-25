@@ -104,14 +104,9 @@ class CrawlerScheduler(object):
             if url:
 
                 if re.search('share/user', url):
-                    query_str = parse.urlparse(url).query
-                    query_arr = [item for item in query_str.split('&')]
-                    query = {}
-                    for item in query_arr:
-                        k, v = item.split('=')
-                        query[k] = v
-                    if query.get('uid'):
-                        self.numbers.append(query.get('uid'))
+                    user_id = re.findall('share/user/(.*)\?', url)
+                    if len(user_id):
+                        self.numbers.append(user_id[0])
 
                 if re.search('share/challenge', url):
                     challenges_id = re.findall('share/challenge/(.*)\?', url)
