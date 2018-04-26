@@ -59,7 +59,9 @@ $ pip install -r requirements.txt
 
 ```
 https://www.douyin.com/share/user/85860189461?share_type=link&tt_from=weixin&utm_source=weixin&utm_medium=aweme_ios&utm_campaign=client_share&uid=97193379950&did=30337873848,
+
 https://www.iesdouyin.com/share/challenge/1593608573838339?utm_campaign=clien,
+
 https://www.iesdouyin.com/share/music/6536362398318922509?utm_campaign=client_share&app=aweme&utm_medium=ios&iid=30337873848&utm_source=copy
 ```
 
@@ -83,7 +85,7 @@ https://www.iesdouyin.com/share/music/6536362398318922509?utm_campaign=client_sh
 python amemv-video-ripper.py URL1,URL2
 ```
 
-站点的名字以逗号分隔,不要有空格.
+分享链接以逗号分隔,不要有空格.
 
 ### 视频的下载与保存
 
@@ -104,7 +106,13 @@ python amemv-video-ripper.py URL1,URL2
 
 如下: 既为抖音号、挑战主题和音乐的三种爬虫方式，需要注意的是，爬虫只对搜索结果第一的结果进行下载，所以请尽量完整的写出你的 主题或音乐名称。
 
-> 189988177,#你可真会拍照,@街舞律动
+```
+https://www.douyin.com/share/user/85860189461?share_type=link&tt_from=weixin&utm_source=weixin&utm_medium=aweme_ios&utm_campaign=client_share&uid=97193379950&did=30337873848,
+
+https://www.iesdouyin.com/share/challenge/1593608573838339?utm_campaign=clien,
+
+https://www.iesdouyin.com/share/music/6536362398318922509?utm_campaign=client_share&app=aweme&utm_medium=ios&iid=30337873848&utm_source=copy
+```
 
 
 ## 喜欢就打赏吧!
