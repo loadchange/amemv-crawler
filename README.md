@@ -65,11 +65,11 @@ https://www.iesdouyin.com/share/music/6536362398318922509?utm_campaign=client_sh
 
 ### 获取用户分享链接的方法（挑战、音乐 类似）
 <p align="center">
-<img src="https://raw.githubusercontent.com/loadchange/amemv-crawler/master/picture/step1.jpg" width="180">
-<img src="https://raw.githubusercontent.com/loadchange/amemv-crawler/master/picture/step2.jpg" width="180">
-<img src="https://raw.githubusercontent.com/loadchange/amemv-crawler/master/picture/step3.png" width="180">
-<img src="https://raw.githubusercontent.com/loadchange/amemv-crawler/master/picture/step4.png" width="180">
-<img src="https://raw.githubusercontent.com/loadchange/amemv-crawler/master/picture/step5.jpg" width="180">
+<img src="https://raw.githubusercontent.com/loadchange/amemv-crawler/master/picture/step1.jpg" width="160">
+<img src="https://raw.githubusercontent.com/loadchange/amemv-crawler/master/picture/step2.jpg" width="160">
+<img src="https://raw.githubusercontent.com/loadchange/amemv-crawler/master/picture/step3.png" width="160">
+<img src="https://raw.githubusercontent.com/loadchange/amemv-crawler/master/picture/step4.png" width="160">
+<img src="https://raw.githubusercontent.com/loadchange/amemv-crawler/master/picture/step5.jpg" width="160">
 </p>
 
 然后保存文件,双击运行`amemv-video-ripper.py`或者在终端(terminal)里面
