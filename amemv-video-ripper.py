@@ -6,7 +6,6 @@ import sys
 import codecs
 import requests
 import re
-from urllib import parse
 from six.moves import queue as Queue
 from threading import Thread
 import json
@@ -206,6 +205,36 @@ class CrawlerScheduler(object):
             return video_count
 
         video_count = get_aweme_list()
+
+        favorite_folder = target_folder + '/favorite'
+        favorite_video_url = "https://www.douyin.com/aweme/v1/aweme/favorite/?{0}"
+        favorite_video_params = {
+            'user_id': str(user_id),
+            'count': '21',
+            'max_cursor': '0',
+            'aid': '1128',
+            '_signature': signature
+        }
+
+        if not os.path.exists(favorite_folder):
+            os.makedirs(favorite_folder)
+
+        def get_favorite_list(max_cursor=None, video_count=video_count):
+            if max_cursor:
+                favorite_video_params['max_cursor'] = str(max_cursor)
+            url = favorite_video_url.format('&'.join([key + '=' + favorite_video_params[key] for key in favorite_video_params]))
+            res = requests.get(url, headers=self.headers)
+            contentJson = json.loads(res.content.decode('utf-8'))
+            favorite_list = contentJson.get('aweme_list', [])
+            for aweme in favorite_list:
+                video_count += 1
+                self._join_download_queue(aweme, favorite_folder)
+            if contentJson.get('has_more') == 1:
+                return get_favorite_list(contentJson.get('max_cursor'), video_count)
+
+            return video_count
+
+        video_count = get_favorite_list()
 
         if video_count == 0:
             print("There's no video in number %s." % user_id)

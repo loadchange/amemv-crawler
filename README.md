@@ -3,7 +3,7 @@ amemv-crawler
 
 > 请在Python3下运行
 
-这是一个[Python](https://www.python.org)的脚本,配置运行后可以下载指定抖音用户的全部视频，也可以下载指定主题(挑战)或音乐下的全部视频。
+这是一个[Python](https://www.python.org)的脚本,配置运行后可以下载指定抖音用户的全部视频(含收藏)，也可以下载指定主题(挑战)或音乐下的全部视频。
 
 ## 怎么样方便地讨论交流
 
@@ -80,6 +80,8 @@ https://www.iesdouyin.com/share/music/6536362398318922509?utm_campaign=client_sh
 ### 第二种方法:使用命令行参数(仅针对会使用操作系统终端的用户)
 
 如果你对Windows或者Unix系统的命令行很熟悉,你可以通过指定运行时的命令行参数来指定要下载的站点:
+
+某些平台下注意给URL增加引号
 
 ```bash
 python amemv-video-ripper.py URL1,URL2
