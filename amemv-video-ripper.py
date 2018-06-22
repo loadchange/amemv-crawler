@@ -45,7 +45,11 @@ class DownloadWorker(Thread):
                 'test_cdn': 'None',
                 'improve_bitrate': '0'
             }
-            download_url = download_url.format('&'.join([key + '=' + download_params[key] for key in download_params]))
+            download_url = download_url.format(
+                '&'.join(
+                    [key + '=' + download_params[key] for key in download_params]
+                )
+            )
             self._download(uri, 'video', download_url, target_folder)
 
     def _download(self, uri, medium_type, medium_url, target_folder):
@@ -99,9 +103,8 @@ class CrawlerScheduler(object):
         self.challenges = []
         self.musics = []
         for i in range(len(items)):
-            url = items[i]
+            url = self.getRealAddress(items[i])
             if url:
-
                 if re.search('share/user', url):
                     user_id = re.findall('share/user/(.*)\?', url)
                     if len(user_id):
@@ -118,6 +121,12 @@ class CrawlerScheduler(object):
 
         self.queue = Queue.Queue()
         self.scheduling()
+
+    # 短地址转长地址
+    def getRealAddress(self, url):
+        if url.find('v.douyin.com') < 0: return url
+        res = requests.get(url, headers=self.headers, allow_redirects=False)
+        return res.headers['Location']
 
     def scheduling(self):
         for x in range(THREADS):
@@ -222,7 +231,8 @@ class CrawlerScheduler(object):
         def get_favorite_list(max_cursor=None, video_count=video_count):
             if max_cursor:
                 favorite_video_params['max_cursor'] = str(max_cursor)
-            url = favorite_video_url.format('&'.join([key + '=' + favorite_video_params[key] for key in favorite_video_params]))
+            url = favorite_video_url.format(
+                '&'.join([key + '=' + favorite_video_params[key] for key in favorite_video_params]))
             res = requests.get(url, headers=self.headers)
             contentJson = json.loads(res.content.decode('utf-8'))
             favorite_list = contentJson.get('aweme_list', [])
@@ -266,7 +276,8 @@ class CrawlerScheduler(object):
             if cursor:
                 challenge_video_params['cursor'] = str(cursor)
 
-            url = challenge_video_url.format('&'.join([key + '=' + challenge_video_params[key] for key in challenge_video_params]))
+            url = challenge_video_url.format(
+                '&'.join([key + '=' + challenge_video_params[key] for key in challenge_video_params]))
             res = requests.get(url, headers=self.headers)
             contentJson = json.loads(res.content.decode('utf-8'))
             aweme_list = contentJson.get('aweme_list', [])
@@ -310,7 +321,8 @@ class CrawlerScheduler(object):
             if cursor:
                 challenge_video_params['cursor'] = str(cursor)
 
-            url = challenge_video_url.format('&'.join([key + '=' + challenge_video_params[key] for key in challenge_video_params]))
+            url = challenge_video_url.format(
+                '&'.join([key + '=' + challenge_video_params[key] for key in challenge_video_params]))
             res = requests.get(url, headers=self.headers)
             contentJson = json.loads(res.content.decode('utf-8'))
             aweme_list = contentJson.get('aweme_list', [])

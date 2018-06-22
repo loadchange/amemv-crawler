@@ -116,6 +116,19 @@ https://www.iesdouyin.com/share/challenge/1593608573838339?utm_campaign=clien,
 https://www.iesdouyin.com/share/music/6536362398318922509?utm_campaign=client_share&app=aweme&utm_medium=ios&iid=30337873848&utm_source=copy
 ```
 
+> 短地址的情况
+
+```
+http://v.douyin.com/cDo2P/,
+
+http://v.douyin.com/cFuAN/,
+
+http://v.douyin.com/cMdjU/
+```
+
+### 处理意外
+
+2018-06-22 抖音分享出现短地址，解决办法：读取到 __v.douyin.com__ 的任务时，尝试请求，在302的情况下取Response Headers中Location。
 
 ## 喜欢就打赏吧!
 
