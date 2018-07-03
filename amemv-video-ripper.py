@@ -128,6 +128,10 @@ class CrawlerScheduler(object):
         res = requests.get(url, headers=self.headers, allow_redirects=False)
         return res.headers['Location']
 
+    def generateSignature(self, str):
+        p = os.popen('node fuck-byted-acrawler2.js %s' % str)
+        return p.readlines()[0]
+
     def scheduling(self):
         for x in range(THREADS):
             worker = DownloadWorker(self.queue)
@@ -186,8 +190,7 @@ class CrawlerScheduler(object):
             print("Number %s does not exist" % user_id)
             return
 
-        p = os.popen('node fuck-byted-acrawler.js %s' % user_id)
-        signature = p.readlines()[0]
+        signature = self.generateSignature(str(user_id))
 
         user_video_url = "https://www.douyin.com/aweme/v1/aweme/post/?{0}"
         user_video_params = {
@@ -261,6 +264,8 @@ class CrawlerScheduler(object):
         if not os.path.isdir(target_folder):
             os.mkdir(target_folder)
 
+        signature = self.generateSignature(str(challenge_id))
+
         challenge_video_url = "https://www.iesdouyin.com/aweme/v1/challenge/aweme/?{0}"
         challenge_video_params = {
             'ch_id': str(challenge_id),
@@ -268,7 +273,9 @@ class CrawlerScheduler(object):
             'cursor': '0',
             'aid': '1128',
             'screen_limit': '3',
-            'download_click_limit': '3'
+            'download_click_limit': '3',
+            '_signature': signature
+
         }
 
         def get_aweme_list(cursor=None, video_count=0):
@@ -306,6 +313,8 @@ class CrawlerScheduler(object):
         if not os.path.isdir(target_folder):
             os.mkdir(target_folder)
 
+        signature = self.generateSignature(str(music_id))
+
         challenge_video_url = "https://www.iesdouyin.com/aweme/v1/music/aweme/?{0}"
         challenge_video_params = {
             'music_id': str(music_id),
@@ -313,7 +322,8 @@ class CrawlerScheduler(object):
             'cursor': '0',
             'aid': '1128',
             'screen_limit': '3',
-            'download_click_limit': '3'
+            'download_click_limit': '3',
+            '_signature': signature
         }
 
         def get_aweme_list(cursor=None, video_count=0):
