@@ -130,7 +130,7 @@ http://v.douyin.com/cMdjU/
 
 2018-06-22 抖音分享出现短地址，解决办法：读取到 __v.douyin.com__ 的任务时，尝试请求，在302的情况下取Response Headers中Location。
 
-2018-07-02 更新了 __douyin_falcon:node_modules/byted-acrawler/dist/runtime__，我们保存同步更新 __fuck-byted-acrawler.js__ !
+2018-07-02 更新了 __douyin_falcon:node_modules/byted-acrawler/dist/runtime__，我们保持同步更新 __fuck-byted-acrawler.js__ !
 
 ## 喜欢就打赏吧!
 
