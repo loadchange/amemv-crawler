@@ -106,17 +106,17 @@ class CrawlerScheduler(object):
             url = self.getRealAddress(items[i])
             if url:
                 if re.search('share/user', url):
-                    user_id = re.findall('share/user/(.*)\?', url)
+                    user_id = re.findall('share/user/(\d+)', url)
                     if len(user_id):
                         self.numbers.append(user_id[0])
 
                 if re.search('share/challenge', url):
-                    challenges_id = re.findall('share/challenge/(.*)\?', url)
+                    challenges_id = re.findall('share/challenge/(\d+)', url)
                     if len(challenges_id):
                         self.challenges.append(challenges_id[0])
 
                 if re.search('share/music', url):
-                    musics_id = re.findall('share/music/(.*)\?', url)
+                    musics_id = re.findall('share/music/(\d+)', url)
                     self.musics.append(musics_id[0])
 
         self.queue = Queue.Queue()
