@@ -104,20 +104,25 @@ class CrawlerScheduler(object):
         self.musics = []
         for i in range(len(items)):
             url = self.getRealAddress(items[i])
-            if url:
-                if re.search('share/user', url):
-                    user_id = re.findall('share/user/(\d+)', url)
-                    if len(user_id):
-                        self.numbers.append(user_id[0])
+            if not url: continue
 
-                if re.search('share/challenge', url):
-                    challenges_id = re.findall('share/challenge/(\d+)', url)
-                    if len(challenges_id):
-                        self.challenges.append(challenges_id[0])
+            if re.search('share/user', url):
+                user_id = re.findall('share/user/(\d+)', url)
+                if not len(user_id): continue
+                res = requests.get(url, headers=self.headers)
+                if not res: continue
+                dytk = re.findall("dytk: '(.*)'", res.content.decode('utf-8'))
+                if len(dytk):
+                    dytk.insert(0, user_id[0])
+                    self.numbers.append(dytk)
 
-                if re.search('share/music', url):
-                    musics_id = re.findall('share/music/(\d+)', url)
-                    self.musics.append(musics_id[0])
+            if re.search('share/challenge', url):
+                challenges_id = re.findall('share/challenge/(\d+)', url)
+                if len(challenges_id): self.challenges.append(challenges_id[0])
+
+            if re.search('share/music', url):
+                musics_id = re.findall('share/music/(\d+)', url)
+                if len(musics_id): self.musics.append(musics_id[0])
 
         self.queue = Queue.Queue()
         self.scheduling()
@@ -138,8 +143,8 @@ class CrawlerScheduler(object):
             worker.daemon = True
             worker.start()
 
-        for number in self.numbers:
-            self.download_videos(number)
+        for params in self.numbers:
+            self.download_videos(params)
 
         for challenge in self.challenges:
             self.download_challenge_videos(challenge)
@@ -147,8 +152,11 @@ class CrawlerScheduler(object):
         for music in self.musics:
             self.download_music_videos(music)
 
-    def download_videos(self, number):
-        video_count = self._download_user_media(number)
+    def download_videos(self, params):
+        if len(params) < 2: return
+        number = params[0]
+        dytk = params[1]
+        video_count = self._download_user_media(number, dytk)
         self.queue.join()
         print("\nAweme number %s, video number %s\n\n" % (number, str(video_count)))
         print("\nFinish Downloading All the videos from %s\n\n" % number)
@@ -180,7 +188,7 @@ class CrawlerScheduler(object):
             print("Cannot decode response data from DESC %s" % aweme['desc'])
             return
 
-    def _download_user_media(self, user_id):
+    def _download_user_media(self, user_id, dytk):
         current_folder = os.getcwd()
         target_folder = os.path.join(current_folder, 'download/%s' % user_id)
         if not os.path.isdir(target_folder):
@@ -198,7 +206,8 @@ class CrawlerScheduler(object):
             'count': '21',
             'max_cursor': '0',
             'aid': '1128',
-            '_signature': signature
+            '_signature': signature,
+            'dytk': dytk
         }
 
         def get_aweme_list(max_cursor=None, video_count=0):

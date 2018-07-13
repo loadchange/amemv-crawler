@@ -132,6 +132,8 @@ http://v.douyin.com/cMdjU/
 
 2018-07-02 更新了 __douyin_falcon:node_modules/byted-acrawler/dist/runtime__，我们保持同步更新 __fuck-byted-acrawler.js__ !
 
+2018-07-12 用户视频接口 __https://www.douyin.com/aweme/v1/aweme/post/__ 增加参数dytk, 这个参数在页面中直接取。
+
 ## 喜欢就打赏吧!
 
 如果您喜欢这个项目, 那就打个赏支持一下作者吧! 非常感谢!
