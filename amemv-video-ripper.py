@@ -234,7 +234,8 @@ class CrawlerScheduler(object):
             'count': '21',
             'max_cursor': '0',
             'aid': '1128',
-            '_signature': signature
+            '_signature': signature,
+            'dytk': dytk
         }
 
         if not os.path.exists(favorite_folder):
