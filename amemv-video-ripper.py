@@ -87,7 +87,7 @@ class DownloadWorker(Thread):
             retry_times = 0
             while retry_times < RETRY:
                 try:
-                    resp = requests.get(medium_url, stream=True, timeout=TIMEOUT)
+                    resp = requests.get(medium_url, headers=HEADERS, stream=True, timeout=TIMEOUT)
                     if resp.status_code == 403:
                         retry_times = RETRY
                         print("Access Denied when retrieve %s.\n" % medium_url)
@@ -167,6 +167,7 @@ class CrawlerScheduler(object):
                 if uri: failedUriList.append(uri[0])
                 os.remove(path)
         if failedUriList:
+            print(failedUriList)
             print('failed downloads: %d, The downgrade plan is ready to be downloaded!' % len(failedUriList))
             for uri in self.numbers:
                 self.queue.put(('videowm', uri, None, targetDir))
