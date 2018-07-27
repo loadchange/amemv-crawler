@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
-import sys
+import sys, getopt
 
 import hashlib
 import codecs
@@ -278,7 +278,7 @@ class CrawlerScheduler(object):
             'dytk': dytk
         }
 
-        if not os.path.exists(favorite_folder):
+        if not noFavorite and not os.path.exists(favorite_folder):
             os.makedirs(favorite_folder)
 
         def get_favorite_list(max_cursor=None, video_count=video_count):
@@ -297,7 +297,8 @@ class CrawlerScheduler(object):
 
             return video_count
 
-        video_count = get_favorite_list()
+        if not noFavorite:
+            video_count = get_favorite_list()
 
         if video_count == 0:
             print("There's no video in number %s." % user_id)
@@ -434,10 +435,19 @@ def parse_sites(fileName):
     return numbers
 
 
-if __name__ == "__main__":
-    content = None
+noFavorite = False
 
-    if len(sys.argv) < 2:
+if __name__ == "__main__":
+    content, opts, args = None, None, []
+
+    try:
+        if len(sys.argv) < 2:
+            opts, args = getopt.getopt(sys.argv[1:], "hi:o:", ["no-favorite"])
+    except getopt.GetoptError as err:
+        usage()
+        sys.exit(2)
+
+    if not args:
         # check the sites file
         filename = "share-url.txt"
         if os.path.exists(filename):
@@ -446,9 +456,15 @@ if __name__ == "__main__":
             usage()
             sys.exit(1)
     else:
-        content = sys.argv[1].split(",")
+        content = (args[0] if args else '').split(",")
 
     if len(content) == 0 or content[0] == "":
         usage()
         sys.exit(1)
+
+    for o, val in opts:
+        if o in ("-nf", "--no-favorite"):
+            noFavorite = True
+            break
+            
     CrawlerScheduler(content)
