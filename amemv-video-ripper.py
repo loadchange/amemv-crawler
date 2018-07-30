@@ -24,7 +24,8 @@ HEADERS = {
     'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
     'accept-encoding': 'gzip, deflate, br',
     'accept-language': 'zh-CN,zh;q=0.9',
-    'cache-control': 'max-age=0',
+    'pragma': 'no-cache',
+    'cache-control': 'no-cache',
     'upgrade-insecure-requests': '1',
     'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1',
 }
@@ -228,6 +229,36 @@ class CrawlerScheduler(object):
             print("Cannot decode response data from DESC %s" % aweme['desc'])
             return
 
+    def __download_favorite_media(self, user_id, dytk, signature, favorite_folder, video_count):
+        if not os.path.exists(favorite_folder):
+            os.makedirs(favorite_folder)
+        favorite_video_url = "https://www.douyin.com/aweme/v1/aweme/favorite/?{0}"
+        favorite_video_params = {
+            'user_id': str(user_id),
+            'count': '21',
+            'max_cursor': '0',
+            'aid': '1128',
+            '_signature': signature,
+            'dytk': dytk
+        }
+        max_cursor = None
+        while True:
+            if max_cursor:
+                favorite_video_params['max_cursor'] = str(max_cursor)
+            url = favorite_video_url.format(
+                '&'.join([key + '=' + favorite_video_params[key] for key in favorite_video_params]))
+            res = requests.get(url, headers=HEADERS)
+            contentJson = json.loads(res.content.decode('utf-8'))
+            favorite_list = contentJson.get('aweme_list', [])
+            for aweme in favorite_list:
+                video_count += 1
+                self._join_download_queue(aweme, favorite_folder)
+            if contentJson.get('has_more') == 1:
+                max_cursor = contentJson.get('max_cursor')
+            else:
+                break
+        return video_count
+
     def _download_user_media(self, user_id, dytk):
         current_folder = os.getcwd()
         target_folder = os.path.join(current_folder, 'download/%s' % user_id)
@@ -249,56 +280,26 @@ class CrawlerScheduler(object):
             '_signature': signature,
             'dytk': dytk
         }
-
-        def get_aweme_list(max_cursor=None, video_count=0):
+        max_cursor, video_count = None, 0
+        while True:
             if max_cursor:
                 user_video_params['max_cursor'] = str(max_cursor)
             url = user_video_url.format('&'.join([key + '=' + user_video_params[key] for key in user_video_params]))
             res = requests.get(url, headers=HEADERS)
+            print(url)
+            print(res.content.decode('utf-8'))
             contentJson = json.loads(res.content.decode('utf-8'))
             aweme_list = contentJson.get('aweme_list', [])
             for aweme in aweme_list:
                 video_count += 1
                 self._join_download_queue(aweme, target_folder)
             if contentJson.get('has_more') == 1:
-                return get_aweme_list(contentJson.get('max_cursor'), video_count)
-
-            return video_count
-
-        video_count = get_aweme_list()
-
-        favorite_folder = target_folder + '/favorite'
-        favorite_video_url = "https://www.douyin.com/aweme/v1/aweme/favorite/?{0}"
-        favorite_video_params = {
-            'user_id': str(user_id),
-            'count': '21',
-            'max_cursor': '0',
-            'aid': '1128',
-            '_signature': signature,
-            'dytk': dytk
-        }
-
-        if not noFavorite and not os.path.exists(favorite_folder):
-            os.makedirs(favorite_folder)
-
-        def get_favorite_list(max_cursor=None, video_count=video_count):
-            if max_cursor:
-                favorite_video_params['max_cursor'] = str(max_cursor)
-            url = favorite_video_url.format(
-                '&'.join([key + '=' + favorite_video_params[key] for key in favorite_video_params]))
-            res = requests.get(url, headers=HEADERS)
-            contentJson = json.loads(res.content.decode('utf-8'))
-            favorite_list = contentJson.get('aweme_list', [])
-            for aweme in favorite_list:
-                video_count += 1
-                self._join_download_queue(aweme, favorite_folder)
-            if contentJson.get('has_more') == 1:
-                return get_favorite_list(contentJson.get('max_cursor'), video_count)
-
-            return video_count
-
+                max_cursor = contentJson.get('max_cursor')
+            else:
+                break
         if not noFavorite:
-            video_count = get_favorite_list()
+            favorite_folder = target_folder + '/favorite'
+            video_count = self.__download_favorite_media(user_id, dytk, signature, favorite_folder, video_count)
 
         if video_count == 0:
             print("There's no video in number %s." % user_id)
@@ -329,34 +330,30 @@ class CrawlerScheduler(object):
 
         }
 
-        def get_aweme_list(cursor=None, video_count=0):
-
+        cursor, video_count = None, 0
+        while True:
             if cursor:
                 challenge_video_params['cursor'] = str(cursor)
                 challenge_video_params['_signature'] = self.generateSignature(str(challenge_id) + '9' + str(cursor))
-
             url = challenge_video_url.format(
                 '&'.join([key + '=' + challenge_video_params[key] for key in challenge_video_params]))
             res = requests.get(url, headers=HEADERS)
             contentJson = json.loads(res.content.decode('utf-8'))
             aweme_list = contentJson.get('aweme_list', [])
+            if not aweme_list:
+                break
             for aweme in aweme_list:
                 video_count += 1
                 self._join_download_queue(aweme, target_folder)
             if contentJson.get('has_more') == 1:
-                return get_aweme_list(contentJson.get('cursor'), video_count)
-
-            return video_count
-
-        video_count = get_aweme_list()
-
+                cursor = contentJson.get('cursor')
+            else:
+                break
         if video_count == 0:
             print("There's no video in challenge %s." % challenge_id)
-
         return video_count
 
     def _download_music_media(self, music_id):
-
         if not music_id:
             print("Challenge #%s does not exist" % music_id)
             return
@@ -366,7 +363,6 @@ class CrawlerScheduler(object):
             os.mkdir(target_folder)
 
         signature = self.generateSignature(str(music_id))
-
         music_video_url = "https://www.iesdouyin.com/aweme/v1/music/aweme/?{0}"
         music_video_params = {
             'music_id': str(music_id),
@@ -377,9 +373,8 @@ class CrawlerScheduler(object):
             'download_click_limit': '0',
             '_signature': signature
         }
-
-        def get_aweme_list(cursor=None, video_count=0):
-
+        cursor, video_count = None, 0
+        while True:
             if cursor:
                 music_video_params['cursor'] = str(cursor)
                 music_video_params['_signature'] = self.generateSignature(str(music_id) + '9' + str(cursor))
@@ -389,19 +384,17 @@ class CrawlerScheduler(object):
             res = requests.get(url, headers=HEADERS)
             contentJson = json.loads(res.content.decode('utf-8'))
             aweme_list = contentJson.get('aweme_list', [])
+            if not aweme_list:
+                break
             for aweme in aweme_list:
                 video_count += 1
                 self._join_download_queue(aweme, target_folder)
             if contentJson.get('has_more') == 1:
-                return get_aweme_list(contentJson.get('cursor'), video_count)
-
-            return video_count
-
-        video_count = get_aweme_list()
-
+                cursor = contentJson.get('cursor')
+            else:
+                break
         if video_count == 0:
             print("There's no video in music %s." % music_id)
-
         return video_count
 
 
@@ -441,7 +434,7 @@ if __name__ == "__main__":
     content, opts, args = None, None, []
 
     try:
-        if len(sys.argv) < 2:
+        if len(sys.argv) >= 2:
             opts, args = getopt.getopt(sys.argv[1:], "hi:o:", ["no-favorite"])
     except getopt.GetoptError as err:
         usage()
@@ -462,9 +455,10 @@ if __name__ == "__main__":
         usage()
         sys.exit(1)
 
-    for o, val in opts:
-        if o in ("-nf", "--no-favorite"):
-            noFavorite = True
-            break
-            
+    if opts:
+        for o, val in opts:
+            if o in ("-nf", "--no-favorite"):
+                noFavorite = True
+                break
+
     CrawlerScheduler(content)
