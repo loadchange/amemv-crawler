@@ -168,7 +168,6 @@ class CrawlerScheduler(object):
                 if uri: failedUriList.append(uri[0])
                 os.remove(path)
         if failedUriList:
-            print(failedUriList)
             print('failed downloads: %d, The downgrade plan is ready to be downloaded!' % len(failedUriList))
             for uri in self.numbers:
                 self.queue.put(('videowm', uri, None, targetDir))
@@ -286,8 +285,7 @@ class CrawlerScheduler(object):
                 user_video_params['max_cursor'] = str(max_cursor)
             url = user_video_url.format('&'.join([key + '=' + user_video_params[key] for key in user_video_params]))
             res = requests.get(url, headers=HEADERS)
-            print(url)
-            print(res.content.decode('utf-8'))
+
             contentJson = json.loads(res.content.decode('utf-8'))
             aweme_list = contentJson.get('aweme_list', [])
             for aweme in aweme_list:
