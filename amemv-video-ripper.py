@@ -21,13 +21,12 @@ RETRY = 5
 THREADS = 10
 
 HEADERS = {
-    'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
     'accept-encoding': 'gzip, deflate, br',
     'accept-language': 'zh-CN,zh;q=0.9',
     'pragma': 'no-cache',
     'cache-control': 'no-cache',
     'upgrade-insecure-requests': '1',
-    'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1',
+    'user-agent': "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1",
 }
 
 FAILED_FILE_MD5 = '6419a414275112dcc2e073f62a3ce91e'
@@ -271,7 +270,7 @@ class CrawlerScheduler(object):
 
         signature = self.generateSignature(str(user_id))
 
-        user_video_url = "https://www.douyin.com/aweme/v1/aweme/post/?{0}"
+        user_video_url = "https://www.amemv.com/aweme/v1/aweme/post/?{0}"
         user_video_params = {
             'user_id': str(user_id),
             'count': '21',
@@ -285,11 +284,12 @@ class CrawlerScheduler(object):
             if max_cursor:
                 user_video_params['max_cursor'] = str(max_cursor)
             url = user_video_url.format('&'.join([key + '=' + user_video_params[key] for key in user_video_params]))
+            url = url.replace("\r", "").replace("\n", "")
             res = requests.get(url, headers=HEADERS)
-            print(url)
-            print(res.content.decode('utf-8'))
             contentJson = json.loads(res.content.decode('utf-8'))
             aweme_list = contentJson.get('aweme_list', [])
+            if not aweme_list:
+                break
             for aweme in aweme_list:
                 video_count += 1
                 self._join_download_queue(aweme, target_folder)
@@ -325,9 +325,8 @@ class CrawlerScheduler(object):
             'cursor': '0',
             'aid': '1128',
             'screen_limit': '3',
-            'download_click_limit': '3',
+            'download_click_limit': '0',
             '_signature': signature
-
         }
 
         cursor, video_count = None, 0
