@@ -167,7 +167,6 @@ class CrawlerScheduler(object):
                 if uri: failedUriList.append(uri[0])
                 os.remove(path)
         if failedUriList:
-            print(failedUriList)
             print('failed downloads: %d, The downgrade plan is ready to be downloaded!' % len(failedUriList))
             for uri in self.numbers:
                 self.queue.put(('videowm', uri, None, targetDir))
