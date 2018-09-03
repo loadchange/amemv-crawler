@@ -128,6 +128,8 @@ http://v.douyin.com/cMdjU/
 
 2018-07-12 用户视频接口 __https://www.douyin.com/aweme/v1/aweme/post/__ 增加参数dytk, 这个参数在页面中直接取。
 
+2018-09-03 修正用户视频列表接口域名 __douyin.com__ to __amemv.com__
+
 ## 喜欢就打赏吧!
 
 如果您喜欢这个项目, 那就打个赏支持一下作者吧! 非常感谢!
