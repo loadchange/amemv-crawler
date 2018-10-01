@@ -3,6 +3,7 @@
 import os
 import sys, getopt
 
+import copy
 import hashlib
 import codecs
 import requests
@@ -32,9 +33,11 @@ HEADERS = {
 
 
 def download(medium_type, uri, medium_url, target_folder):
+    headers = copy.copy(HEADERS)
     file_name = uri
     if medium_type == 'video':
         file_name += '.mp4'
+        headers['user-agent'] = 'Aweme/27014 CFNetwork/974.2.1 Darwin/18.0.0'
     elif medium_type == 'image':
         file_name += '.jpg'
         file_name = file_name.replace("/", "-")
@@ -47,7 +50,7 @@ def download(medium_type, uri, medium_url, target_folder):
         retry_times = 0
         while retry_times < RETRY:
             try:
-                resp = requests.get(medium_url, headers=HEADERS, stream=True, timeout=TIMEOUT)
+                resp = requests.get(medium_url, headers=headers, stream=True, timeout=TIMEOUT)
                 if resp.status_code == 403:
                     retry_times = RETRY
                     print("Access Denied when retrieve %s.\n" % medium_url)
@@ -167,8 +170,36 @@ class CrawlerScheduler(object):
     def _join_download_queue(self, aweme, target_folder):
         try:
             if aweme.get('video', None):
-                playAddr = aweme['video']['play_addr']
-                self.queue.put(('video', playAddr['uri'], playAddr['url_list'][0], target_folder))
+                uri = aweme['video']['play_addr']['uri']
+                download_url = "https://aweme.snssdk.com/aweme/v1/play/?{0}"
+                download_params = {
+                    'video_id': uri,
+                    'line': '0',
+                    'ratio': '720p',
+                    'media_type': '4',
+                    'vr_type': '0',
+                    'test_cdn': 'None',
+                    'improve_bitrate': '0',
+                    'iid': '35628056608',
+                    'device_id': '46166618999',
+                    'os_api': '18',
+                    'app_name': 'aweme',
+                    'channel': 'App%20Store',
+                    'idfa': '00000000-0000-0000-0000-000000000000',
+                    'device_platform': 'iphone',
+                    'build_number': '27014',
+                    'vid': '2ED380A7-F09C-6C9E-90F5-862D58F3129C',
+                    'openudid': '21dae85eeac1da35a69e2a0ffeaeef61c78a2e98',
+                    'device_type': 'iPhone8%2C2',
+                    'app_version': '2.7.0',
+                    'version_code': '2.7.0',
+                    'os_version': '12.0',
+                    'screen_width': '1242',
+                    'aid': '1128',
+                    'ac': 'WIFI'
+                }
+                url = download_url.format('&'.join([key + '=' + download_params[key] for key in download_params]))
+                self.queue.put(('video', uri, url, target_folder))
             else:
                 if aweme.get('image_infos', None):
                     image = aweme['image_infos']['label_large']
