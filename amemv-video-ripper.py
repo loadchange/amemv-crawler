@@ -195,7 +195,7 @@ class CrawlerScheduler(object):
                     'aid': '1128',
                     'ac': 'WIFI'
                 }
-                if aweme['hostname'] == 't.tiktok.com':
+                if aweme.get('hostname') == 't.tiktok.com':
                     download_url = 'https://api.tiktokv.com/aweme/v1/playwm/?{0}'
                     download_params = {
                         'video_id': uri,
