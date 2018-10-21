@@ -238,7 +238,7 @@ class CrawlerScheduler(object):
             for aweme in favorite_list:
                 video_count += 1
                 self._join_download_queue(aweme, favorite_folder)
-            if contentJson.get('has_more') == 1:
+            if contentJson.get('has_more'):
                 max_cursor = contentJson.get('max_cursor')
             else:
                 break
@@ -279,7 +279,7 @@ class CrawlerScheduler(object):
             for aweme in aweme_list:
                 video_count += 1
                 self._join_download_queue(aweme, target_folder)
-            if contentJson.get('has_more') == 1:
+            if contentJson.get('has_more'):
                 max_cursor = contentJson.get('max_cursor')
             else:
                 break
@@ -332,7 +332,7 @@ class CrawlerScheduler(object):
             for aweme in aweme_list:
                 video_count += 1
                 self._join_download_queue(aweme, target_folder)
-            if contentJson.get('has_more') == 1:
+            if contentJson.get('has_more'):
                 cursor = contentJson.get('cursor')
             else:
                 break
@@ -381,7 +381,7 @@ class CrawlerScheduler(object):
                 aweme['hostname'] = hostname
                 video_count += 1
                 self._join_download_queue(aweme, target_folder)
-            if contentJson.get('has_more') == 1:
+            if contentJson.get('has_more'):
                 cursor = contentJson.get('cursor')
             else:
                 break
