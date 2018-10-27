@@ -28,8 +28,7 @@ HEADERS = {
     'pragma': 'no-cache',
     'cache-control': 'no-cache',
     'upgrade-insecure-requests': '1',
-    'user-agent': "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) "
-                  "Version/11.0 Mobile/15A372 Safari/604.1",
+    'user-agent': "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1",
 }
 
 
@@ -255,7 +254,6 @@ class CrawlerScheduler(object):
             return
         hostname = urllib.parse.urlparse(url).hostname
         signature = self.generateSignature(str(user_id))
-
         user_video_url = "https://%s/aweme/v1/aweme/post/?{0}" % hostname
         user_video_params = {
             'user_id': str(user_id),
@@ -274,8 +272,6 @@ class CrawlerScheduler(object):
             res = requests.get(url, headers=HEADERS)
             contentJson = json.loads(res.content.decode('utf-8'))
             aweme_list = contentJson.get('aweme_list', [])
-            if not aweme_list:
-                break
             for aweme in aweme_list:
                 video_count += 1
                 self._join_download_queue(aweme, target_folder)
