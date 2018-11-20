@@ -195,10 +195,24 @@ class CrawlerScheduler(object):
                     'ac': 'WIFI'
                 }
                 if aweme.get('hostname') == 't.tiktok.com':
-                    download_url = 'https://api.tiktokv.com/aweme/v1/playwm/?{0}'
+                    download_url = 'http://api.tiktokv.com/aweme/v1/play/?{0}'
                     download_params = {
                         'video_id': uri,
-                        'line': '0'
+                        'line': '0',
+                        'ratio': '720p',
+                        'media_type': '4',
+                        'vr_type': '0',
+                        'test_cdn': 'None',
+                        'improve_bitrate': '0',
+                        'version_code': '1.7.2',
+                        'language': 'en',
+                        'app_name': 'trill',
+                        'vid': 'D7B3981F-DD46-45A1-A97E-428B90096C3E',
+                        'app_version': '1.7.2',
+                        'device_id': '6619780206485964289',
+                        'channel': 'App Store',
+                        'mcc_mnc': '',
+                        'tz_offset': '28800'
                     }
                 url = download_url.format('&'.join([key + '=' + download_params[key] for key in download_params]))
                 self.queue.put(('video', uri, url, target_folder))
@@ -326,6 +340,7 @@ class CrawlerScheduler(object):
             if not aweme_list:
                 break
             for aweme in aweme_list:
+                aweme['hostname'] = hostname
                 video_count += 1
                 self._join_download_queue(aweme, target_folder)
             if contentJson.get('has_more'):
