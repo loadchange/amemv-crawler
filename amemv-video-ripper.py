@@ -230,7 +230,7 @@ class CrawlerScheduler(object):
     def __download_favorite_media(self, user_id, dytk, hostname, signature, favorite_folder, video_count):
         if not os.path.exists(favorite_folder):
             os.makedirs(favorite_folder)
-        favorite_video_url = "https://%s/aweme/v1/aweme/favorite/?{0}" % hostname
+        favorite_video_url = "https://%s/aweme/v1/aweme/favorite/" % hostname
         favorite_video_params = {
             'user_id': str(user_id),
             'count': '21',
@@ -243,9 +243,7 @@ class CrawlerScheduler(object):
         while True:
             if max_cursor:
                 favorite_video_params['max_cursor'] = str(max_cursor)
-            url = favorite_video_url.format(
-                '&'.join([key + '=' + favorite_video_params[key] for key in favorite_video_params]))
-            res = requests.get(url, headers=HEADERS)
+            res = requests.get(favorite_video_url, headers=HEADERS, params=favorite_video_params)
             contentJson = json.loads(res.content.decode('utf-8'))
             favorite_list = contentJson.get('aweme_list', [])
             for aweme in favorite_list:
@@ -268,7 +266,7 @@ class CrawlerScheduler(object):
             return
         hostname = urllib.parse.urlparse(url).hostname
         signature = self.generateSignature(str(user_id))
-        user_video_url = "https://%s/aweme/v1/aweme/post/?{0}" % hostname
+        user_video_url = "https://%s/aweme/v1/aweme/post/" % hostname
         user_video_params = {
             'user_id': str(user_id),
             'count': '21',
@@ -281,9 +279,7 @@ class CrawlerScheduler(object):
         while True:
             if max_cursor:
                 user_video_params['max_cursor'] = str(max_cursor)
-            url = user_video_url.format('&'.join([key + '=' + user_video_params[key] for key in user_video_params]))
-            url = url.replace("\r", "").replace("\n", "")
-            res = requests.get(url, headers=HEADERS)
+            res = requests.get(user_video_url, headers=HEADERS, params=user_video_params)
             contentJson = json.loads(res.content.decode('utf-8'))
             aweme_list = contentJson.get('aweme_list', [])
             for aweme in aweme_list:
@@ -316,7 +312,7 @@ class CrawlerScheduler(object):
         hostname = urllib.parse.urlparse(url).hostname
         signature = self.generateSignature(str(challenge_id) + '9' + '0')
 
-        challenge_video_url = "https://%s/aweme/v1/challenge/aweme/?{0}" % hostname
+        challenge_video_url = "https://%s/aweme/v1/challenge/aweme/" % hostname
         challenge_video_params = {
             'ch_id': str(challenge_id),
             'count': '9',
@@ -332,9 +328,7 @@ class CrawlerScheduler(object):
             if cursor:
                 challenge_video_params['cursor'] = str(cursor)
                 challenge_video_params['_signature'] = self.generateSignature(str(challenge_id) + '9' + str(cursor))
-            url = challenge_video_url.format(
-                '&'.join([key + '=' + challenge_video_params[key] for key in challenge_video_params]))
-            res = requests.get(url, headers=HEADERS)
+            res = requests.get(challenge_video_url, headers=HEADERS,params=challenge_video_params)
             contentJson = json.loads(res.content.decode('utf-8'))
             aweme_list = contentJson.get('aweme_list', [])
             if not aweme_list:
