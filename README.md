@@ -140,4 +140,4 @@ http://v.douyin.com/cMdjU/
 
 如果您喜欢这个项目, 那就打个赏支持一下作者吧! 非常感谢!
 
-<p align="center"><img src="https://raw.githubusercontent.com/loadchange/amemv-crawler/master/picture/award.jpg" width="550"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/loadchange/amemv-crawler/master/picture/award.jpg" width="750"></p>
