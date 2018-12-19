@@ -3,6 +3,8 @@ amemv-crawler
 
 > 请在Python3下运行
 
+[README-EN](./README-EN.md)
+
 这是一个[Python](https://www.python.org)的脚本,配置运行后可以下载指定抖音用户的全部视频(含收藏)，也可以下载指定主题(挑战)或音乐下的全部视频。
 
 ## 怎么样方便地讨论交流
