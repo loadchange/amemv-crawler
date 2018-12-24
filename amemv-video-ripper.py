@@ -33,6 +33,7 @@ HEADERS = {
     'user-agent': "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1",
 }
 
+
 def getRemoteFileSize(url, proxy=None):
     '''
     通过content-length头获取远程文件大小
@@ -50,6 +51,7 @@ def getRemoteFileSize(url, proxy=None):
     else:
         fileSize = dict(response.headers).get('Content-Length', 0)
         return int(fileSize)
+
 
 def download(medium_type, uri, medium_url, target_folder):
     headers = copy.copy(HEADERS)
@@ -97,7 +99,7 @@ def download(medium_type, uri, medium_url, target_folder):
 def get_real_address(url):
     if url.find('v.douyin.com') < 0: return url
     res = requests.get(url, headers=HEADERS, allow_redirects=False)
-    return res.headers['Location']
+    return res.headers['Location'] if res.status_code == 302 else None
 
 
 def get_dytk(url):
@@ -352,7 +354,7 @@ class CrawlerScheduler(object):
             if cursor:
                 challenge_video_params['cursor'] = str(cursor)
                 challenge_video_params['_signature'] = self.generateSignature(str(challenge_id) + '9' + str(cursor))
-            res = requests.get(challenge_video_url, headers=HEADERS,params=challenge_video_params)
+            res = requests.get(challenge_video_url, headers=HEADERS, params=challenge_video_params)
             try:
                 contentJson = json.loads(res.content.decode('utf-8'))
             except:
