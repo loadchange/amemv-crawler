@@ -47,7 +47,7 @@ There are two ways to specify you share the link to download the trill, one is t
 
 ### The first method: edit the share-url.txt file
 
-Find a text editor, and then open the file `share - url.txt`, the number you want to download a trill to share links to edit inside, with a comma/space/TAB/form/return character space, can be multiple lines. For example, the file looks like this:
+Find a text editor, and then open the file `share-url.txt`, the number you want to download a trill to share links to edit inside, with a comma/space/TAB/form/return character space, can be multiple lines. For example, the file looks like this:
 
 ```
 https://www.douyin.com/share/user/85860189461?share_type=link&tt_from=weixin&utm_source=weixin&utm_medium=aweme_ios&utm_campaign=client_share&uid=97193379950&did=30337873848,
