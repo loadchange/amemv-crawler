@@ -92,7 +92,7 @@ def download(medium_type, uri, medium_url, target_folder):
             os.remove(file_path)
         except OSError:
             pass
-        print("Failed to retrieve %s from %s.\n" % medium_url)
+        print("Failed to retrieve %s from %s.\n" % (uri, medium_url))
     time.sleep(1)
 
 
