@@ -2,7 +2,6 @@
 
 import os
 import sys, getopt
-
 import urllib.parse
 import urllib.request
 import copy
@@ -52,7 +51,6 @@ def getRemoteFileSize(url, proxy=None):
         fileSize = dict(response.headers).get('Content-Length', 0)
         return int(fileSize)
 
-
 def download(medium_type, uri, medium_url, target_folder):
     headers = copy.copy(HEADERS)
     file_name = uri
@@ -95,12 +93,10 @@ def download(medium_type, uri, medium_url, target_folder):
         print("Failed to retrieve %s from %s.\n" % medium_url)
     time.sleep(1)
 
-
 def get_real_address(url):
     if url.find('v.douyin.com') < 0: return url
     res = requests.get(url, headers=HEADERS, allow_redirects=False)
     return res.headers['Location'] if res.status_code == 302 else None
-
 
 def get_dytk(url):
     res = requests.get(url, headers=HEADERS)
@@ -240,8 +236,9 @@ class CrawlerScheduler(object):
                         'mcc_mnc': '',
                         'tz_offset': '28800'
                     }
+                share_info = aweme.get('share_info', {})
                 url = download_url.format('&'.join([key + '=' + download_params[key] for key in download_params]))
-                self.queue.put(('video', uri, url, target_folder))
+                self.queue.put(('video', share_info.get('share_desc', uri), url, target_folder))
             else:
                 if aweme.get('image_infos', None):
                     image = aweme['image_infos']['label_large']
@@ -424,7 +421,6 @@ class CrawlerScheduler(object):
             print("There's no video in music %s." % music_id)
         return video_count
 
-
 def usage():
     print("1. Please create file share-url.txt under this same directory.\n"
           "2. In share-url.txt, you can specify amemv share page url separated by "
@@ -440,7 +436,6 @@ def usage():
           u"或者直接使用命令行参数指定站点\n"
           u"例子: python amemv-video-ripper.py url1,url2")
 
-
 def parse_sites(fileName):
     with open(fileName, "rb") as f:
         txt = f.read().rstrip().lstrip()
@@ -453,7 +448,6 @@ def parse_sites(fileName):
         if site:
             numbers.append(site)
     return numbers
-
 
 noFavorite = False
 
