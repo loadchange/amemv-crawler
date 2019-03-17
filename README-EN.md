@@ -138,4 +138,4 @@ If you like it, you can get a reward.
 
 If you like this project, then give the author a reward to support it! Thank you very much!
 
-<p align="center"><img src="https://raw.githubusercontent.com/loadchange/amemv-crawler/master/picture/award.jpg" width="750"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/loadchange/amemv-crawler/master/picture/award.jpg" width="366"></p>
