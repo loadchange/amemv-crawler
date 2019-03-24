@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import os
-import sys, getopt
+import sys
+import getopt
 import urllib.parse
 import urllib.request
 import copy
@@ -51,6 +52,7 @@ def getRemoteFileSize(url, proxy=None):
         fileSize = dict(response.headers).get('Content-Length', 0)
         return int(fileSize)
 
+
 def download(medium_type, uri, medium_url, target_folder):
     headers = copy.copy(HEADERS)
     file_name = uri
@@ -73,7 +75,8 @@ def download(medium_type, uri, medium_url, target_folder):
     retry_times = 0
     while retry_times < RETRY:
         try:
-            resp = requests.get(medium_url, headers=headers, stream=True, timeout=TIMEOUT)
+            resp = requests.get(medium_url, headers=headers,
+                                stream=True, timeout=TIMEOUT)
             if resp.status_code == 403:
                 retry_times = RETRY
                 print("Access Denied when retrieve %s.\n" % medium_url)
@@ -93,16 +96,21 @@ def download(medium_type, uri, medium_url, target_folder):
         print("Failed to retrieve %s from %s.\n" % (uri, medium_url))
     time.sleep(1)
 
+
 def get_real_address(url):
-    if url.find('v.douyin.com') < 0: return url
+    if url.find('v.douyin.com') < 0:
+        return url
     res = requests.get(url, headers=HEADERS, allow_redirects=False)
     return res.headers['Location'] if res.status_code == 302 else None
 
+
 def get_dytk(url):
     res = requests.get(url, headers=HEADERS)
-    if not res: return None
+    if not res:
+        return None
     dytk = re.findall("dytk: '(.*)'", res.content.decode('utf-8'))
-    if len(dytk): return dytk[0]
+    if len(dytk):
+        return dytk[0]
     return None
 
 
@@ -126,10 +134,14 @@ class CrawlerScheduler(object):
         self.musics = []
         for i in range(len(items)):
             url = get_real_address(items[i])
-            if not url: continue
-            if re.search('share/user', url): self.numbers.append(url)
-            if re.search('share/challenge', url): self.challenges.append(url)
-            if re.search('share/music', url): self.musics.append(url)
+            if not url:
+                continue
+            if re.search('share/user', url):
+                self.numbers.append(url)
+            if re.search('share/challenge', url):
+                self.challenges.append(url)
+            if re.search('share/music', url):
+                self.musics.append(url)
 
         self.queue = Queue.Queue()
         self.scheduling()
@@ -152,24 +164,32 @@ class CrawlerScheduler(object):
             worker.daemon = True
             worker.start()
 
-        for url in self.numbers: self.download_user_videos(url)
-        for url in self.challenges: self.download_challenge_videos(url)
-        for url in self.musics: self.download_music_videos(url)
+        for url in self.numbers:
+            self.download_user_videos(url)
+        for url in self.challenges:
+            self.download_challenge_videos(url)
+        for url in self.musics:
+            self.download_music_videos(url)
 
     def download_user_videos(self, url):
         number = re.findall(r'share/user/(\d+)', url)
-        if not len(number): return
+        if not len(number):
+            return
         dytk = get_dytk(url)
-        if not dytk: return
+        hostname = urllib.parse.urlparse(url).hostname
+        if hostname != 't.tiktok.com' and not dytk:
+            return
         user_id = number[0]
         video_count = self._download_user_media(user_id, dytk, url)
         self.queue.join()
-        print("\nAweme number %s, video number %s\n\n" % (user_id, str(video_count)))
+        print("\nAweme number %s, video number %s\n\n" %
+              (user_id, str(video_count)))
         print("\nFinish Downloading All the videos from %s\n\n" % user_id)
 
     def download_challenge_videos(self, url):
         challenge = re.findall('share/challenge/(\d+)', url)
-        if not len(challenge): return
+        if not len(challenge):
+            return
         challenges_id = challenge[0]
         video_count = self._download_challenge_media(challenges_id, url)
         self.queue.join()
@@ -178,7 +198,8 @@ class CrawlerScheduler(object):
 
     def download_music_videos(self, url):
         music = re.findall('share/music/(\d+)', url)
-        if not len(music): return
+        if not len(music):
+            return
         musics_id = music[0]
         video_count = self._download_music_media(musics_id, url)
         self.queue.join()
@@ -271,6 +292,7 @@ class CrawlerScheduler(object):
             favorite_list = contentJson.get('aweme_list', [])
             for aweme in favorite_list:
                 video_count += 1
+                aweme['hostname'] = hostname
                 self._join_download_queue(aweme, favorite_folder)
             if contentJson.get('has_more'):
                 max_cursor = contentJson.get('max_cursor')
@@ -298,6 +320,10 @@ class CrawlerScheduler(object):
             '_signature': signature,
             'dytk': dytk
         }
+        if hostname == 't.tiktok.com':
+            user_video_params.pop('dytk')
+            user_video_params['aid'] = '1180'
+
         max_cursor, video_count = None, 0
         while True:
             if max_cursor:
@@ -307,6 +333,7 @@ class CrawlerScheduler(object):
             aweme_list = contentJson.get('aweme_list', [])
             for aweme in aweme_list:
                 video_count += 1
+                aweme['hostname'] = hostname
                 self._join_download_queue(aweme, target_folder)
             if contentJson.get('has_more'):
                 max_cursor = contentJson.get('max_cursor')
@@ -314,8 +341,8 @@ class CrawlerScheduler(object):
                 break
         if not noFavorite:
             favorite_folder = target_folder + '/favorite'
-            video_count = self.__download_favorite_media(user_id, dytk, hostname, signature, favorite_folder,
-                                                         video_count)
+            video_count = self.__download_favorite_media(
+                user_id, dytk, hostname, signature, favorite_folder, video_count)
 
         if video_count == 0:
             print("There's no video in number %s." % user_id)
@@ -323,12 +350,12 @@ class CrawlerScheduler(object):
         return video_count
 
     def _download_challenge_media(self, challenge_id, url):
-
         if not challenge_id:
             print("Challenge #%s does not exist" % challenge_id)
             return
         current_folder = os.getcwd()
-        target_folder = os.path.join(current_folder, 'download/#%s' % challenge_id)
+        target_folder = os.path.join(
+            current_folder, 'download/#%s' % challenge_id)
         if not os.path.isdir(target_folder):
             os.mkdir(target_folder)
 
@@ -350,7 +377,8 @@ class CrawlerScheduler(object):
         while True:
             if cursor:
                 challenge_video_params['cursor'] = str(cursor)
-                challenge_video_params['_signature'] = self.generateSignature(str(challenge_id) + '9' + str(cursor))
+                challenge_video_params['_signature'] = self.generateSignature(
+                    str(challenge_id) + '9' + str(cursor))
             res = requests.get(challenge_video_url, headers=HEADERS, params=challenge_video_params)
             try:
                 contentJson = json.loads(res.content.decode('utf-8'))
@@ -394,21 +422,24 @@ class CrawlerScheduler(object):
             '_signature': signature
         }
         if hostname == 't.tiktok.com':
-            for key in ['screen_limit', 'download_click_limit', '_signature']: music_video_params.pop(key)
+            for key in ['screen_limit', 'download_click_limit', '_signature']:
+                music_video_params.pop(key)
             music_video_params['aid'] = '1180'
 
         cursor, video_count = None, 0
         while True:
             if cursor:
                 music_video_params['cursor'] = str(cursor)
-                music_video_params['_signature'] = self.generateSignature(str(music_id) + '9' + str(cursor))
+                music_video_params['_signature'] = self.generateSignature(
+                    str(music_id) + '9' + str(cursor))
 
             url = music_video_url.format(
                 '&'.join([key + '=' + music_video_params[key] for key in music_video_params]))
             res = requests.get(url, headers=HEADERS)
             contentJson = json.loads(res.content.decode('utf-8'))
             aweme_list = contentJson.get('aweme_list', [])
-            if not aweme_list: break
+            if not aweme_list:
+                break
             for aweme in aweme_list:
                 aweme['hostname'] = hostname
                 video_count += 1
@@ -421,6 +452,7 @@ class CrawlerScheduler(object):
             print("There's no video in music %s." % music_id)
         return video_count
 
+
 def usage():
     print("1. Please create file share-url.txt under this same directory.\n"
           "2. In share-url.txt, you can specify amemv share page url separated by "
@@ -428,13 +460,14 @@ def usage():
           "3. Save the file and retry.\n\n"
           "Sample File Content:\nurl1,url2\n\n"
           "Or use command line options:\n\n"
-          "Sample:\npython amemv-video-ripper.py number1,number2\n\n\n")
+          "Sample:\npython amemv-video-ripper.py url1,url2\n\n\n")
     print(u"未找到share-url.txt文件，请创建.\n"
           u"请在文件中指定抖音分享页面URL，并以 逗号/空格/tab/表格鍵/回车符 分割，支持多行.\n"
           u"保存文件并重试.\n\n"
           u"例子: url1,url12\n\n"
-          u"或者直接使用命令行参数指定站点\n"
+          u"或者直接使用命令行参数指定链接\n"
           u"例子: python amemv-video-ripper.py url1,url2")
+
 
 def parse_sites(fileName):
     with open(fileName, "rb") as f:
@@ -448,6 +481,7 @@ def parse_sites(fileName):
         if site:
             numbers.append(site)
     return numbers
+
 
 noFavorite = False
 
