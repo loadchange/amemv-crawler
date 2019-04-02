@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 import os
 import sys
 import getopt
@@ -75,8 +74,7 @@ def download(medium_type, uri, medium_url, target_folder):
     retry_times = 0
     while retry_times < RETRY:
         try:
-            resp = requests.get(medium_url, headers=headers,
-                                stream=True, timeout=TIMEOUT)
+            resp = requests.get(medium_url, headers=headers, stream=True, timeout=TIMEOUT)
             if resp.status_code == 403:
                 retry_times = RETRY
                 print("Access Denied when retrieve %s.\n" % medium_url)
@@ -193,7 +191,8 @@ class CrawlerScheduler(object):
         challenges_id = challenge[0]
         video_count = self._download_challenge_media(challenges_id, url)
         self.queue.join()
-        print("\nAweme challenge #%s, video number %d\n\n" % (challenges_id, video_count))
+        print("\nAweme challenge #%s, video number %d\n\n" %
+              (challenges_id, video_count))
         print("\nFinish Downloading All the videos from #%s\n\n" % challenges_id)
 
     def download_music_videos(self, url):
@@ -203,7 +202,8 @@ class CrawlerScheduler(object):
         musics_id = music[0]
         video_count = self._download_music_media(musics_id, url)
         self.queue.join()
-        print("\nAweme music @%s, video number %d\n\n" % (musics_id, video_count))
+        print("\nAweme music @%s, video number %d\n\n" %
+              (musics_id, video_count))
         print("\nFinish Downloading All the videos from @%s\n\n" % musics_id)
 
     def _join_download_queue(self, aweme, target_folder):
@@ -258,12 +258,15 @@ class CrawlerScheduler(object):
                         'tz_offset': '28800'
                     }
                 share_info = aweme.get('share_info', {})
-                url = download_url.format('&'.join([key + '=' + download_params[key] for key in download_params]))
-                self.queue.put(('video', share_info.get('share_desc', uri), url, target_folder))
+                url = download_url.format(
+                    '&'.join([key + '=' + download_params[key] for key in download_params]))
+                self.queue.put(('video', share_info.get(
+                    'share_desc', uri), url, target_folder))
             else:
                 if aweme.get('image_infos', None):
                     image = aweme['image_infos']['label_large']
-                    self.queue.put(('image', image['uri'], image['url_list'][0], target_folder))
+                    self.queue.put(
+                        ('image', image['uri'], image['url_list'][0], target_folder))
 
         except KeyError:
             return
@@ -287,7 +290,8 @@ class CrawlerScheduler(object):
         while True:
             if max_cursor:
                 favorite_video_params['max_cursor'] = str(max_cursor)
-            res = requests.get(favorite_video_url, headers=HEADERS, params=favorite_video_params)
+            res = requests.get(favorite_video_url,
+                               headers=HEADERS, params=favorite_video_params)
             contentJson = json.loads(res.content.decode('utf-8'))
             favorite_list = contentJson.get('aweme_list', [])
             for aweme in favorite_list:
@@ -328,7 +332,8 @@ class CrawlerScheduler(object):
         while True:
             if max_cursor:
                 user_video_params['max_cursor'] = str(max_cursor)
-            res = requests.get(user_video_url, headers=HEADERS, params=user_video_params)
+            res = requests.get(user_video_url, headers=HEADERS,
+                               params=user_video_params)
             contentJson = json.loads(res.content.decode('utf-8'))
             aweme_list = contentJson.get('aweme_list', [])
             for aweme in aweme_list:
@@ -339,7 +344,7 @@ class CrawlerScheduler(object):
                 max_cursor = contentJson.get('max_cursor')
             else:
                 break
-        if not noFavorite:
+        if download_favorite:
             favorite_folder = target_folder + '/favorite'
             video_count = self.__download_favorite_media(
                 user_id, dytk, hostname, signature, favorite_folder, video_count)
@@ -379,7 +384,8 @@ class CrawlerScheduler(object):
                 challenge_video_params['cursor'] = str(cursor)
                 challenge_video_params['_signature'] = self.generateSignature(
                     str(challenge_id) + '9' + str(cursor))
-            res = requests.get(challenge_video_url, headers=HEADERS, params=challenge_video_params)
+            res = requests.get(challenge_video_url,
+                               headers=HEADERS, params=challenge_video_params)
             try:
                 contentJson = json.loads(res.content.decode('utf-8'))
             except:
@@ -473,7 +479,8 @@ def parse_sites(fileName):
     with open(fileName, "rb") as f:
         txt = f.read().rstrip().lstrip()
         txt = codecs.decode(txt, 'utf-8')
-        txt = txt.replace("\t", ",").replace("\r", ",").replace("\n", ",").replace(" ", ",")
+        txt = txt.replace("\t", ",").replace(
+            "\r", ",").replace("\n", ",").replace(" ", ",")
         txt = txt.split(",")
     numbers = list()
     for raw_site in txt:
@@ -483,14 +490,14 @@ def parse_sites(fileName):
     return numbers
 
 
-noFavorite = False
+download_favorite = False
 
 if __name__ == "__main__":
     content, opts, args = None, None, []
 
     try:
         if len(sys.argv) >= 2:
-            opts, args = getopt.getopt(sys.argv[1:], "hi:o:", ["no-favorite"])
+            opts, args = getopt.getopt(sys.argv[1:], "hi:o:", ["favorite"])
     except getopt.GetoptError as err:
         usage()
         sys.exit(2)
@@ -512,8 +519,8 @@ if __name__ == "__main__":
 
     if opts:
         for o, val in opts:
-            if o in ("-nf", "--no-favorite"):
-                noFavorite = True
+            if o in ("--favorite"):
+                download_favorite = True
                 break
 
     CrawlerScheduler(content)
