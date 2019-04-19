@@ -70,6 +70,14 @@ def download(medium_type, uri, medium_url, target_folder):
         localSize = os.path.getsize(file_path)
         if remoteSize == localSize:
             return
+    tem_file_path = file_path
+    suffix = 0
+    while os.path.isfile(tem_file_path):
+        suffix += 1
+        tem_file_name = file_name.rsplit('.', 1)[0] + '_' + str(suffix) + '.' + file_name.rsplit('.', 1)[1]
+        tem_file_path = os.path.join(target_folder, tem_file_name)
+    file_path = tem_file_path
+
     print("Downloading %s from %s.\n" % (file_name, medium_url))
     retry_times = 0
     while retry_times < RETRY:
