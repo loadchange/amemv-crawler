@@ -11,7 +11,9 @@ This is a [Python] script (https://www.python.org), which can be configured to d
 
 ## Warning
 
-Hello, everyone, this project is a **hands-on project**, the source code is only used with you **to learn Python**, you can be free: copy, distribute and derive the current source code. You may not use it for *commercial purposes* or other *malicious purposes*.
+~~Hello, everyone, this project is a **hands-on project**, the source code is only used with you **to learn Python**, you can be free: copy, distribute and derive the current source code. You may not use it for *commercial purposes* or other *malicious purposes*.~~
+
+Thanks to [@Means88](https://github.com/Means88) suggestion ([#120](https://github.com/loadchange/amemv-crawler/issues/120)), which is really not right, I choose to keep `MIT License`, __please pay attention to the standards, so we will not be responsible for any consequences caused by the project.__
 
 In addition, the function to be completed in this project is to download video successfully. Some friends put forward some unexpected requirements in **issue**, such as the rename of video, download pictures, width and height of video, release data and play like, etc.
 These improvements may be very beneficial to the project, but I don't have time to deal with them one by one, so please don't send issues for such requirements, and you can directly Pull requests.
