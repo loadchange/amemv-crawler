@@ -13,9 +13,7 @@ amemv-crawler
 
 ## 注意
 
-~~大家好，这个项目是一个**练手项目**，源码仅作为和大家一起**学习Python**使用，你可以免费: 拷贝、分发和派生当前源码。你不可以用于*商业目的*及其他*恶意用途*。~~
-
-感谢 [@Means88](https://github.com/Means88) 的建议（ [#120](https://github.com/loadchange/amemv-crawler/issues/120) ），确有不妥，我选择保留 `MIT License` ，__希望大家注意尺度，因此项目产生的任何后果概不负责。__
+~~大家好，这个项目是一个**练手项目**，源码仅作为和大家一起**学习Python**使用，你可以免费: 拷贝、分发和派生当前源码。你不可以用于*商业目的*及其他*恶意用途*。~~感谢 [@Means88](https://github.com/Means88)（ [#120](https://github.com/loadchange/amemv-crawler/issues/120) ）
 
 另外本项目要完成的功能是将视频成功下载，有一些朋友在 **issue** 中提出了一些超预期的需求，比如视频改名、下载图片、视频宽高、发布数据和播放点赞等等，
 这些完善可能是对项目十分有利的，但是我没有时间去一一处理，所以对于这样的需求请不要在发issue上来了，可以直接提 Pull requests 上来。
@@ -29,9 +27,6 @@ amemv-crawler
 
 
 ## 环境安装
-
-#### 程序猿和程序媛见这里
-
 
 配置好你的Python、node环境,然后`pip install requests `.
 
@@ -80,10 +75,16 @@ https://www.iesdouyin.com/share/music/6536362398318922509?utm_campaign=client_sh
 某些平台下注意给URL增加引号
 
 ```bash
-python amemv-video-ripper.py URL1,URL2
+python amemv-video-ripper.py --url URL1,URL2
 ```
 
 分享链接以逗号分隔,不要有空格.
+
+如果是用户URL默认不下载喜欢列表，需要增加 `--favorite`
+
+```bash
+python amemv-video-ripper.py --url URL --favorite
+```
 
 ### 视频的下载与保存
 
