@@ -54,9 +54,9 @@ def getRemoteFileSize(url, proxy=None):
         return int(fileSize)
 
 
-def download(medium_type, uri, medium_url, target_folder):
+def download(medium_type, uri, medium_url, target_folder, name):
     headers = copy.copy(HEADERS)
-    file_name = uri
+    file_name = name
     if medium_type == 'video':
         file_name += '.mp4'
         headers['user-agent'] = 'Aweme/27014 CFNetwork/974.2.1 Darwin/18.0.0'
@@ -68,10 +68,10 @@ def download(medium_type, uri, medium_url, target_folder):
 
     file_path = os.path.join(target_folder, file_name)
     if os.path.isfile(file_path):
-        remoteSize = getRemoteFileSize(medium_url)
-        localSize = os.path.getsize(file_path)
-        if remoteSize == localSize:
-            return
+        if os.path.exists(file_path):
+            localSize = os.path.getsize(file_path)
+            if localSize > 0:
+                return
     print("Downloading %s from %s.\n" % (file_name, medium_url))
     retry_times = 0
     while retry_times < RETRY:
@@ -121,8 +121,8 @@ class DownloadWorker(Thread):
 
     def run(self):
         while True:
-            medium_type, uri, download_url, target_folder = self.queue.get()
-            download(medium_type, uri, download_url, target_folder)
+            medium_type, uri, download_url, target_folder, name = self.queue.get()
+            download(medium_type, uri, download_url, target_folder, name)
             self.queue.task_done()
 
 
@@ -262,7 +262,7 @@ class CrawlerScheduler(object):
                 url = download_url.format(
                     '&'.join([key + '=' + download_params[key] for key in download_params]))
                 self.queue.put(('video', share_info.get(
-                    'share_desc', uri), url, target_folder))
+                    'share_desc', uri), url, target_folder, aweme['desc']))
             else:
                 if aweme.get('image_infos', None):
                     image = aweme['image_infos']['label_large']
@@ -489,7 +489,7 @@ def parse_sites(fileName):
     return numbers
 
 
-download_favorite = False
+download_favorite = True
 
 if __name__ == "__main__":
     content, opts, args = None, None, []
