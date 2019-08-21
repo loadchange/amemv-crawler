@@ -4,8 +4,8 @@ import sys
 import getopt
 import urllib.parse
 import urllib.request
+from urllib.parse import urlencode
 import copy
-import hashlib
 import codecs
 import requests
 import re
@@ -13,15 +13,6 @@ from six.moves import queue as Queue
 from threading import Thread
 import json
 import time
-
-# Setting timeout
-TIMEOUT = 10
-
-# Retry times
-RETRY = 5
-
-# Numbers of downloading threads concurrently
-THREADS = 10
 
 HEADERS = {
     'accept-encoding': 'gzip, deflate, br',
@@ -31,6 +22,16 @@ HEADERS = {
     'upgrade-insecure-requests': '1',
     'user-agent': "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1",
 }
+
+TIMEOUT = 10
+
+RETRY = 5
+
+RESULTS_VARIATION_RETRY = 5000
+
+THREADS = 10
+
+DOWNLOAD_FAVORITE = False
 
 
 def getRemoteFileSize(url, proxy=None):
@@ -53,11 +54,11 @@ def getRemoteFileSize(url, proxy=None):
 
 
 def download(medium_type, uri, medium_url, target_folder):
-    headers = copy.copy(HEADERS)
+    headers = copy.deepcopy(HEADERS)
     file_name = uri
     if medium_type == 'video':
         file_name += '.mp4'
-        headers['user-agent'] = 'Aweme/27014 CFNetwork/974.2.1 Darwin/18.0.0'
+        headers['user-agent'] = 'Aweme/63013 CFNetwork/978.0.7 Darwin/18.6.0'
     elif medium_type == 'image':
         file_name += '.jpg'
         file_name = file_name.replace("/", "-")
@@ -107,7 +108,11 @@ def get_real_address(url):
     if url.find('v.douyin.com') < 0:
         return url
     res = requests.get(url, headers=HEADERS, allow_redirects=False)
-    return res.headers['Location'] if res.status_code == 302 else None
+    if res.status_code == 302:
+        long_url = res.headers['Location']
+        HEADERS['Referer'] = long_url
+        return long_url
+    return None
 
 
 def get_dytk(url):
@@ -155,14 +160,7 @@ class CrawlerScheduler(object):
     @staticmethod
     def generateSignature(value):
         p = os.popen('node fuck-byted-acrawler.js %s' % value)
-        return p.readlines()[0]
-
-    @staticmethod
-    def calculateFileMd5(filename):
-        hmd5 = hashlib.md5()
-        fp = open(filename, "rb")
-        hmd5.update(fp.read())
-        return hmd5.hexdigest()
+        return (p.readlines()[0]).strip()
 
     def scheduling(self):
         for x in range(THREADS):
@@ -188,8 +186,7 @@ class CrawlerScheduler(object):
         user_id = number[0]
         video_count = self._download_user_media(user_id, dytk, url)
         self.queue.join()
-        print("\nAweme number %s, video number %s\n\n" %
-              (user_id, str(video_count)))
+        print("\nAweme number %s, video number %s\n\n" % (user_id, str(video_count)))
         print("\nFinish Downloading All the videos from %s\n\n" % user_id)
 
     def download_challenge_videos(self, url):
@@ -225,25 +222,30 @@ class CrawlerScheduler(object):
                     'ratio': '720p',
                     'media_type': '4',
                     'vr_type': '0',
-                    'test_cdn': 'None',
                     'improve_bitrate': '0',
-                    'iid': '35628056608',
-                    'device_id': '46166618999',
-                    'os_api': '18',
+                    'h265': '1',
+                    'adapt720': '1',
+                    'version_code': '6.3.0',
+                    'pass-region': '1',
+                    'pass-route':	'1',
+                    'js_sdk_version': '1.16.2.7',
                     'app_name': 'aweme',
+                    'vid': '20FD6136-4541-45F8-9500-93308126DCDC',
+                    'app_version': '6.3.0',
+                    'device_id': '58603795683',
                     'channel': 'App%20Store',
-                    'idfa': '00000000-0000-0000-0000-000000000000',
-                    'device_platform': 'iphone',
-                    'build_number': '27014',
-                    'vid': '2ED380A7-F09C-6C9E-90F5-862D58F3129C',
-                    'openudid': '21dae85eeac1da35a69e2a0ffeaeef61c78a2e98',
-                    'device_type': 'iPhone8%2C2',
-                    'app_version': '2.7.0',
-                    'version_code': '2.7.0',
-                    'os_version': '12.0',
-                    'screen_width': '1242',
+                    'mcc_mnc': '46002',
                     'aid': '1128',
-                    'ac': 'WIFI'
+                    'screen_width': '1242',
+                    'openudid': '33d3e9feda631d212a539d1193648a838bcf34fe',
+                    'os_api': '18',
+                    'ac': 'WIFI',
+                    'os_version': '12.3.1',
+                    'device_platform': 'iphone',
+                    'build_number': '63013',
+                    'device_type': 'iPhone9,2',
+                    'iid': '73930963647',
+                    'idfa': '665A82BE-3F80-4A3E-B8E3-CE4ADD6A358F',
                 }
                 if aweme.get('hostname') == 't.tiktok.com':
                     download_url = 'http://api.tiktokv.com/aweme/v1/play/?{0}'
@@ -285,8 +287,8 @@ class CrawlerScheduler(object):
     def __download_favorite_media(self, user_id, dytk, hostname, signature, favorite_folder, video_count):
         if not os.path.exists(favorite_folder):
             os.makedirs(favorite_folder)
-        favorite_video_url = "https://%s/aweme/v1/aweme/favorite/" % hostname
-        favorite_video_params = {
+        url = "https://%s/web/api/v2/aweme/like/" % hostname
+        params = {
             'user_id': str(user_id),
             'count': '21',
             'max_cursor': '0',
@@ -295,21 +297,22 @@ class CrawlerScheduler(object):
             'dytk': dytk
         }
         max_cursor = None
+
         while True:
             if max_cursor:
-                favorite_video_params['max_cursor'] = str(max_cursor)
-            res = requests.get(favorite_video_url,
-                               headers=HEADERS, params=favorite_video_params)
-            contentJson = json.loads(res.content.decode('utf-8'))
-            favorite_list = contentJson.get('aweme_list', [])
+                params['max_cursor'] = str(max_cursor)
+            res = self.requestWebApi(url, params)
+            if not res:
+                res = self.requestWebApi(url, params)
+                continue
+            favorite_list = res.get('aweme_list', [])
             for aweme in favorite_list:
                 video_count += 1
                 aweme['hostname'] = hostname
                 self._join_download_queue(aweme, favorite_folder)
-            if contentJson.get('has_more'):
-                max_cursor = contentJson.get('max_cursor')
-            else:
+            if not res.get('has_more'):
                 break
+            max_cursor = res.get('max_cursor')
         return video_count
 
     def _download_user_media(self, user_id, dytk, url):
@@ -323,8 +326,8 @@ class CrawlerScheduler(object):
             return
         hostname = urllib.parse.urlparse(url).hostname
         signature = self.generateSignature(str(user_id))
-        user_video_url = "https://%s/aweme/v1/aweme/post/" % hostname
-        user_video_params = {
+        url = "https://%s/web/api/v2/aweme/post/" % hostname
+        params = {
             'user_id': str(user_id),
             'count': '21',
             'max_cursor': '0',
@@ -332,27 +335,37 @@ class CrawlerScheduler(object):
             '_signature': signature,
             'dytk': dytk
         }
+
         if hostname == 't.tiktok.com':
-            user_video_params.pop('dytk')
-            user_video_params['aid'] = '1180'
+            params.pop('dytk')
+            params['aid'] = '1180'
 
         max_cursor, video_count = None, 0
+        retry_count = 0
         while True:
             if max_cursor:
-                user_video_params['max_cursor'] = str(max_cursor)
-            res = requests.get(user_video_url, headers=HEADERS,
-                               params=user_video_params)
-            contentJson = json.loads(res.content.decode('utf-8'))
-            aweme_list = contentJson.get('aweme_list', [])
+                params['max_cursor'] = str(max_cursor)
+            res = self.requestWebApi(url, params)
+            if not res:
+                break
+            aweme_list = res.get('aweme_list', [])
             for aweme in aweme_list:
                 video_count += 1
                 aweme['hostname'] = hostname
                 self._join_download_queue(aweme, target_folder)
-            if contentJson.get('has_more'):
-                max_cursor = contentJson.get('max_cursor')
-            else:
+            if not res.get('has_more'):
                 break
-        if download_favorite:
+            max_cursor = res.get('max_cursor')
+            # TODO: Weird result. What went wrong?
+            if not max_cursor:
+                retry_count += 1
+                params['_signature'] = self.generateSignature(str(user_id))
+                if retry_count > RESULTS_VARIATION_RETRY:
+                    print('download user media: %s, Too many failures!' % str(user_id))
+                    break
+                print('download user media: %s, result retry: %d.' %
+                      (str(user_id), retry_count,))
+        if DOWNLOAD_FAVORITE:
             favorite_folder = target_folder + '/favorite'
             video_count = self.__download_favorite_media(
                 user_id, dytk, hostname, signature, favorite_folder, video_count)
@@ -375,8 +388,8 @@ class CrawlerScheduler(object):
         hostname = urllib.parse.urlparse(url).hostname
         signature = self.generateSignature(str(challenge_id) + '9' + '0')
 
-        challenge_video_url = "https://%s/aweme/v1/challenge/aweme/" % hostname
-        challenge_video_params = {
+        url = "https://%s/aweme/v1/challenge/aweme/" % hostname
+        params = {
             'ch_id': str(challenge_id),
             'count': '9',
             'cursor': '0',
@@ -389,25 +402,20 @@ class CrawlerScheduler(object):
         cursor, video_count = None, 0
         while True:
             if cursor:
-                challenge_video_params['cursor'] = str(cursor)
-                challenge_video_params['_signature'] = self.generateSignature(
-                    str(challenge_id) + '9' + str(cursor))
-            res = requests.get(challenge_video_url,
-                               headers=HEADERS, params=challenge_video_params)
-            try:
-                contentJson = json.loads(res.content.decode('utf-8'))
-            except:
-                print(res.content)
-            aweme_list = contentJson.get('aweme_list', [])
+                params['cursor'] = str(cursor)
+                params['_signature'] = self.generateSignature(str(challenge_id) + '9' + str(cursor))
+            res = self.requestWebApi(url, params)
+            if not res:
+                break
+            aweme_list = res.get('aweme_list', [])
             if not aweme_list:
                 break
             for aweme in aweme_list:
                 aweme['hostname'] = hostname
                 video_count += 1
                 self._join_download_queue(aweme, target_folder)
-                print("number: ", video_count)
-            if contentJson.get('has_more'):
-                cursor = contentJson.get('cursor')
+            if res.get('has_more'):
+                cursor = res.get('cursor')
             else:
                 break
         if video_count == 0:
@@ -425,8 +433,8 @@ class CrawlerScheduler(object):
 
         hostname = urllib.parse.urlparse(url).hostname
         signature = self.generateSignature(str(music_id))
-        music_video_url = "https://%s/aweme/v1/music/aweme/?{0}" % hostname
-        music_video_params = {
+        url = "https://%s/web/api/v2/music/list/aweme/?{0}" % hostname
+        params = {
             'music_id': str(music_id),
             'count': '9',
             'cursor': '0',
@@ -437,34 +445,44 @@ class CrawlerScheduler(object):
         }
         if hostname == 't.tiktok.com':
             for key in ['screen_limit', 'download_click_limit', '_signature']:
-                music_video_params.pop(key)
-            music_video_params['aid'] = '1180'
+                params.pop(key)
+            params['aid'] = '1180'
 
         cursor, video_count = None, 0
         while True:
             if cursor:
-                music_video_params['cursor'] = str(cursor)
-                music_video_params['_signature'] = self.generateSignature(
-                    str(music_id) + '9' + str(cursor))
-
-            url = music_video_url.format(
-                '&'.join([key + '=' + music_video_params[key] for key in music_video_params]))
-            res = requests.get(url, headers=HEADERS)
-            contentJson = json.loads(res.content.decode('utf-8'))
-            aweme_list = contentJson.get('aweme_list', [])
+                params['cursor'] = str(cursor)
+                params['_signature'] = self.generateSignature(str(music_id) + '9' + str(cursor))
+            res = self.requestWebApi(url, params)
+            if not res:
+                break
+            aweme_list = res.get('aweme_list', [])
             if not aweme_list:
                 break
             for aweme in aweme_list:
                 aweme['hostname'] = hostname
                 video_count += 1
                 self._join_download_queue(aweme, target_folder)
-            if contentJson.get('has_more'):
-                cursor = contentJson.get('cursor')
+            if res.get('has_more'):
+                cursor = res.get('cursor')
             else:
                 break
         if video_count == 0:
             print("There's no video in music %s." % music_id)
         return video_count
+
+    def requestWebApi(self, url, params):
+        headers = copy.deepcopy(HEADERS)
+        headers['cookie'] = '_ga=GA1.2.1280899533.15586873031; _gid=GA1.2.2142818962.1559528881'
+        res = requests.get(url,  headers=headers, params=params)
+        content = res.content.decode('utf-8')
+        print(content)
+        if not content:
+            print('\n\nWeb Api Error: %s'
+                  '\n\nheaders: %s'
+                  '\n\nparams: %s' % (url, str(headers), str(params),))
+            return None
+        return json.loads(content)
 
 
 def usage():
@@ -474,13 +492,13 @@ def usage():
           "3. Save the file and retry.\n\n"
           "Sample File Content:\nurl1,url2\n\n"
           "Or use command line options:\n\n"
-          "Sample:\npython amemv-video-ripper.py url1,url2\n\n\n")
+          "Sample:\npython amemv-video-ripper.py --urls url1,url2\n\n\n")
     print(u"未找到share-url.txt文件，请创建.\n"
           u"请在文件中指定抖音分享页面URL，并以 逗号/空格/tab/表格鍵/回车符 分割，支持多行.\n"
           u"保存文件并重试.\n\n"
           u"例子: url1,url12\n\n"
           u"或者直接使用命令行参数指定链接\n"
-          u"例子: python amemv-video-ripper.py url1,url2")
+          u"例子: python amemv-video-ripper.py --urls url1,url2")
 
 
 def parse_sites(fileName):
@@ -498,37 +516,36 @@ def parse_sites(fileName):
     return numbers
 
 
-download_favorite = False
+def get_content(filename):
+    if os.path.exists(filename):
+        return parse_sites(filename)
+    else:
+        usage()
+        sys.exit(1)
+
 
 if __name__ == "__main__":
     content, opts, args = None, None, []
 
     try:
-        if len(sys.argv) >= 2:
-            opts, args = getopt.getopt(sys.argv[1:], "hi:o:", ["favorite"])
-    except getopt.GetoptError as err:
+        opts, args = getopt.getopt(sys.argv[1:], "hi:o:", ["favorite", "urls=", "filename="])
+    except getopt.GetoptError:
         usage()
         sys.exit(2)
 
-    if not args:
-        # check the sites file
-        filename = "share-url.txt"
-        if os.path.exists(filename):
-            content = parse_sites(filename)
-        else:
-            usage()
-            sys.exit(1)
-    else:
-        content = (args[0] if args else '').split(",")
+    for opt, arg in opts:
+        if opt == "--favorite":
+            DOWNLOAD_FAVORITE = True
+        elif opt == "--urls":
+            content = arg.split(",")
+        elif opt == "--filename":
+            content = get_content(arg)
+
+    if content == None:
+        content = get_content("share-url.txt")
 
     if len(content) == 0 or content[0] == "":
         usage()
         sys.exit(1)
-
-    if opts:
-        for o, val in opts:
-            if o in ("--favorite"):
-                download_favorite = True
-                break
 
     CrawlerScheduler(content)

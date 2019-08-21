@@ -11,7 +11,7 @@ This is a [Python] script (https://www.python.org), which can be configured to d
 
 ## Warning
 
-Hello, everyone, this project is a **hands-on project**, the source code is only used with you **to learn Python**, you can be free: copy, distribute and derive the current source code. You may not use it for *commercial purposes* or other *malicious purposes*.
+~~Hello, everyone, this project is a **hands-on project**, the source code is only used with you **to learn Python**, you can be free: copy, distribute and derive the current source code. You may not use it for *commercial purposes* or other *malicious purposes*.~~Thanks to [@Means88](https://github.com/Means88) ([#120](https://github.com/loadchange/amemv-crawler/issues/120))
 
 In addition, the function to be completed in this project is to download video successfully. Some friends put forward some unexpected requirements in **issue**, such as the rename of video, download pictures, width and height of video, release data and play like, etc.
 These improvements may be very beneficial to the project, but I don't have time to deal with them one by one, so please don't send issues for such requirements, and you can directly Pull requests.
@@ -25,9 +25,6 @@ Finally, I hope to learn and progress together with you.
 
 
 ## Environmental installation
-
-#### See program apes and program girls here
-
 
 Configured your Python, node environment, then `pip3 install requests `.
 
@@ -76,10 +73,16 @@ If you are familiar with the command line of Windows or Unix systems, you can sp
 Some platforms pay attention to adding quotes to urls
 
 ```bash
-python amemv-video-ripper.py URL1,URL2
+python amemv-video-ripper.py --url URL1,URL2
 ```
 
-Share links are separated by commas without Spaces.
+Share links separated by commas, without Spaces.
+
+If the user URL does not download like list by default, it needs to be added `--favorite`
+
+```bash
+python amemv-video-ripper.py --url URL --favorite
+```
 
 ### Video download and save
 
