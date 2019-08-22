@@ -34,6 +34,16 @@ THREADS = 10
 DOWNLOAD_FAVORITE = False
 
 
+def check_name(string):
+    """
+    Replace forbidden characters in file name. Otherwise "OSError(22, 'Invalid argument')".
+    """
+    block_list = ['\\', '/', ':', '?', '"', '<', '>', '|']
+    for char in block_list:
+        string = string.replace(char, '-')
+    return string
+
+
 def getRemoteFileSize(url, proxy=None):
     '''
     通过content-length头获取远程文件大小
@@ -57,29 +67,29 @@ def download(medium_type, uri, medium_url, target_folder):
     headers = copy.deepcopy(HEADERS)
     file_name = uri
     if medium_type == 'video':
-        file_name += '.mp4'
+        ext = '.mp4'
         headers['user-agent'] = 'Aweme/63013 CFNetwork/978.0.7 Darwin/18.6.0'
     elif medium_type == 'image':
-        file_name += '.jpg'
+        ext = '.jpg'
         file_name = file_name.replace("/", "-")
     else:
         return
 
-    file_path = os.path.join(target_folder, file_name)
-    if os.path.isfile(file_path):
-        remoteSize = getRemoteFileSize(medium_url)
+    remoteSize = getRemoteFileSize(medium_url)
+    file_name = check_name(file_name)
+    file_path = os.path.join(target_folder, file_name+ext)
+    suffix = 0  
+    while os.path.isfile(file_path):
         localSize = os.path.getsize(file_path)
         if remoteSize == localSize:
             return
-    tem_file_path = file_path
-    suffix = 0
-    while os.path.isfile(tem_file_path):
         suffix += 1
-        tem_file_name = file_name.rsplit('.', 1)[0] + '_' + str(suffix) + '.' + file_name.rsplit('.', 1)[1]
-        tem_file_path = os.path.join(target_folder, tem_file_name)
-    file_path = tem_file_path
+        temp_file_name = file_name + '_' + str(suffix)
+        file_path = os.path.join(target_folder, temp_file_name+ext)
 
-    print("Downloading %s from %s.\n" % (file_name, medium_url))
+    # To reserve suffix so that distinguish the videos with same title
+    # but not to show replacement of forbidden chars so that closer to original meaning(e.g. question mark '?')
+    print("Downloading %s from %s.\n" % (uri+'_'+str(suffix)+ext if suffix else uri+ext, medium_url))
     retry_times = 0
     while retry_times < RETRY:
         try:
