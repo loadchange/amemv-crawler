@@ -75,7 +75,8 @@ def download(medium_type, uri, medium_url, target_folder):
     retry_times = 0
     while retry_times < RETRY:
         try:
-            resp = requests.get(medium_url, headers=headers, stream=True, timeout=TIMEOUT)
+            resp = requests.get(medium_url, headers=headers,
+                                stream=True, timeout=TIMEOUT)
             if resp.status_code == 403:
                 retry_times = RETRY
                 print("Access Denied when retrieve %s.\n" % medium_url)
@@ -178,7 +179,8 @@ class CrawlerScheduler(object):
         user_id = number[0]
         video_count = self._download_user_media(user_id, dytk, url)
         self.queue.join()
-        print("\nAweme number %s, video number %s\n\n" % (user_id, str(video_count)))
+        print("\nAweme number %s, video number %s\n\n" %
+              (user_id, str(video_count)))
         print("\nFinish Downloading All the videos from %s\n\n" % user_id)
 
     def download_challenge_videos(self, url):
@@ -215,29 +217,9 @@ class CrawlerScheduler(object):
                     'media_type': '4',
                     'vr_type': '0',
                     'improve_bitrate': '0',
+                    'is_play_url': '1',
                     'h265': '1',
-                    'adapt720': '1',
-                    'version_code': '6.3.0',
-                    'pass-region': '1',
-                    'pass-route':	'1',
-                    'js_sdk_version': '1.16.2.7',
-                    'app_name': 'aweme',
-                    'vid': '20FD6136-4541-45F8-9500-93308126DCDC',
-                    'app_version': '6.3.0',
-                    'device_id': '58603795683',
-                    'channel': 'App%20Store',
-                    'mcc_mnc': '46002',
-                    'aid': '1128',
-                    'screen_width': '1242',
-                    'openudid': '33d3e9feda631d212a539d1193648a838bcf34fe',
-                    'os_api': '18',
-                    'ac': 'WIFI',
-                    'os_version': '12.3.1',
-                    'device_platform': 'iphone',
-                    'build_number': '63013',
-                    'device_type': 'iPhone9,2',
-                    'iid': '73930963647',
-                    'idfa': '665A82BE-3F80-4A3E-B8E3-CE4ADD6A358F',
+                    'adapt720': '1'
                 }
                 if aweme.get('hostname') == 't.tiktok.com':
                     download_url = 'http://api.tiktokv.com/aweme/v1/play/?{0}'
@@ -353,7 +335,8 @@ class CrawlerScheduler(object):
                 retry_count += 1
                 params['_signature'] = self.generateSignature(str(user_id))
                 if retry_count > RESULTS_VARIATION_RETRY:
-                    print('download user media: %s, Too many failures!' % str(user_id))
+                    print('download user media: %s, Too many failures!' %
+                          str(user_id))
                     break
                 print('download user media: %s, result retry: %d.' %
                       (str(user_id), retry_count,))
@@ -395,7 +378,8 @@ class CrawlerScheduler(object):
         while True:
             if cursor:
                 params['cursor'] = str(cursor)
-                params['_signature'] = self.generateSignature(str(challenge_id) + '9' + str(cursor))
+                params['_signature'] = self.generateSignature(
+                    str(challenge_id) + '9' + str(cursor))
             res = self.requestWebApi(url, params)
             if not res:
                 break
@@ -444,7 +428,8 @@ class CrawlerScheduler(object):
         while True:
             if cursor:
                 params['cursor'] = str(cursor)
-                params['_signature'] = self.generateSignature(str(music_id) + '9' + str(cursor))
+                params['_signature'] = self.generateSignature(
+                    str(music_id) + '9' + str(cursor))
             res = self.requestWebApi(url, params)
             if not res:
                 break
@@ -520,7 +505,8 @@ if __name__ == "__main__":
     content, opts, args = None, None, []
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hi:o:", ["favorite", "urls=", "filename="])
+        opts, args = getopt.getopt(sys.argv[1:], "hi:o:", [
+                                   "favorite", "urls=", "filename="])
     except getopt.GetoptError:
         usage()
         sys.exit(2)
